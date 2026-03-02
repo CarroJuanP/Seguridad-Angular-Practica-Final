@@ -1,13 +1,13 @@
-<div class="page-container surface-ground min-h-screen flex align-items-center justify-content-center">
-  <div class="surface-card p-5 shadow-4 border-round form-wrapper w-full sm:w-8 md:w-6 lg:w-5" style="overflow: visible;">
+<div class="register-wrapper">
+  <div class="register-card">
+    <div class="card-header">
+      <i class="pi pi-user-plus header-icon"></i>
+      <h2>Crear Cuenta</h2>
+      <p class="header-subtitle">Completa tus datos para registrarte</p>
+    </div>
 
-        <div class="text-center mb-5">
-            <h2 class="text-3xl font-bold mb-2">Crear Cuenta</h2>
-            <p class="text-600">Completa tus datos para registrarte</p>
-        </div>
-
-        <form [formGroup]="registerForm">
-          <p-stepper [(value)]="activeStep">
+    <form [formGroup]="registerForm">
+      <p-stepper [(value)]="activeStep" class="stepper-container">
 
               <!-- ICONOS -->
               <p-step-list>
@@ -21,45 +21,46 @@
                   <!-- PASO 1 -->
                   <p-step-panel [value]="1">
                       <ng-template #content let-activateCallback="activateCallback">
-                          <div class="flex flex-column gap-3">
+                          <div class="step-content">
+                              <div class="field-group">
+                                  <label class="field-label">Nombre Completo</label>
+                                  <input pInputText formControlName="nombreCompleto" class="field-input" placeholder="Juan Pérez"/>
+                                  <small *ngIf="f['nombreCompleto'].invalid && f['nombreCompleto'].touched" class="p-error error-text">El nombre es obligatorio.</small>
+                              </div>
 
-                              <span class="p-float-label">
-                                  <input pInputText formControlName="nombreCompleto" id="name" class="w-full"/>
-                                  <label for="name">Nombre completo</label>
-                              </span>
-                              <small *ngIf="f['nombreCompleto'].invalid && f['nombreCompleto'].touched" class="p-error">El nombre es obligatorio.</small>
+                              <div class="field-group">
+                                  <label class="field-label">Fecha de Nacimiento</label>
+                                  <p-datepicker formControlName="fechaNacimiento" class="field-input" appendTo="body" [showIcon]="true"></p-datepicker>
+                                  <small *ngIf="f['fechaNacimiento'].invalid && f['fechaNacimiento'].touched" class="p-error error-text">La fecha es obligatoria.</small>
+                              </div>
 
-                              <span class="p-float-label">
-                                  <p-datepicker formControlName="fechaNacimiento" class="w-full" appendTo="body"></p-datepicker>
-                                  <label>Fecha de nacimiento</label>
-                              </span>
-                              <small *ngIf="f['fechaNacimiento'].invalid && f['fechaNacimiento'].touched" class="p-error">La fecha es obligatoria.</small>
+                              <div class="field-group">
+                                  <label class="field-label">Dirección</label>
+                                  <input pInputText formControlName="direccion" class="field-input" placeholder="Calle Principal 123"/>
+                                  <small *ngIf="f['direccion'].invalid && f['direccion'].touched" class="p-error error-text">La dirección es obligatoria.</small>
+                              </div>
 
-                              <span class="p-float-label">
-                                  <input pInputText formControlName="direccion" id="dir" class="w-full"/>
-                                  <label for="dir">Dirección</label>
-                              </span>
-                              <small *ngIf="f['direccion'].invalid && f['direccion'].touched" class="p-error">La dirección es obligatoria.</small>
+                              <div class="field-group">
+                                  <label class="field-label">Teléfono</label>
+                                  <input pInputText formControlName="telefono" class="field-input" placeholder="3001234567"/>
+                                  <small *ngIf="f['telefono'].invalid && f['telefono'].touched" class="p-error error-text">Teléfono inválido, solo números.</small>
+                              </div>
 
-                              <span class="p-float-label">
-                                  <input pInputText formControlName="telefono" id="tel" class="w-full"/>
-                                  <label for="tel">Teléfono</label>
-                              </span>
-                              <small *ngIf="f['telefono'].invalid && f['telefono'].touched" class="p-error">Teléfono inválido, solo números.</small>
+                              <div *ngIf="!esMayorDeEdad() && f['fechaNacimiento'].touched" class="age-warning">
+                                <i class="pi pi-exclamation-triangle"></i>
+                                <span>Debes ser mayor de 18 años para continuar</span>
+                              </div>
 
-                          </div>
-
-                          <div class="flex justify-content-end mt-4">
-                              <p-button
-                                  label="Continuar"
-                                  icon="pi pi-arrow-right"
-                                  iconPos="right"
-                                  [disabled]="f['nombreCompleto'].invalid || f['fechaNacimiento'].invalid || f['direccion'].invalid || f['telefono'].invalid || !esMayorDeEdad()"
-                                  (onClick)="activateCallback(2)">
-                              </p-button>
-                          </div>
-                          <div *ngIf="!esMayorDeEdad() && f['fechaNacimiento'].touched" class="mt-1">
-                            <small class="p-error">Debes ser mayor de edad para continuar</small>
+                              <div class="button-group mt-5">
+                                  <p-button
+                                      label="Continuar"
+                                      icon="pi pi-arrow-right"
+                                      iconPos="right"
+                                      [disabled]="f['nombreCompleto'].invalid || f['fechaNacimiento'].invalid || f['direccion'].invalid || f['telefono'].invalid || !esMayorDeEdad()"
+                                      (onClick)="activateCallback(2)"
+                                      class="btn-full">
+                                  </p-button>
+                              </div>
                           </div>
                       </ng-template>
                   </p-step-panel>
@@ -67,52 +68,53 @@
                   <!-- PASO 2 -->
                   <p-step-panel [value]="2">
                       <ng-template #content let-activateCallback="activateCallback">
-                          <div class="flex flex-column gap-3">
+                          <div class="step-content">
+                              <div class="field-group">
+                                  <label class="field-label">Usuario</label>
+                                  <input pInputText formControlName="usuario" class="field-input" placeholder="mi_usuario"/>
+                                  <small *ngIf="f['usuario'].invalid && f['usuario'].touched" class="p-error error-text">El usuario es obligatorio.</small>
+                              </div>
 
-                              <span class="p-float-label">
-                                  <input pInputText formControlName="usuario" id="user" class="w-full"/>
-                                  <label for="user">Usuario</label>
-                              </span>
-                              <small *ngIf="f['usuario'].invalid && f['usuario'].touched" class="p-error">El usuario es obligatorio.</small>
+                              <div class="field-group">
+                                  <label class="field-label">Correo Electropnico</label>
+                                  <input pInputText formControlName="email" type="email" class="field-input" placeholder="tu@correo.com"/>
+                                  <small *ngIf="f['email'].invalid && f['email'].touched" class="p-error error-text">Introduce un email valido.</small>
+                              </div>
 
-                              <span class="p-float-label">
-                                  <input pInputText formControlName="email" id="email2" type="email" class="w-full"/>
-                                  <label for="email2">Email</label>
-                              </span>
-                              <small *ngIf="f['email'].invalid && f['email'].touched" class="p-error">Introduce un email válido.</small>
+                              <div class="field-group">
+                                  <label class="field-label">Contrasena</label>
+                                  <p-password formControlName="password" toggleMask="true" class="field-input" placeholder="••••••••"></p-password>
+                                  <small *ngIf="f['password'].invalid && f['password'].touched" class="p-error error-text">
+                                    Min. 10 caracteres con un simbolo especial (!@#$%^&*).
+                                  </small>
+                              </div>
 
-                              <span class="p-float-label">
-                                  <p-password formControlName="password" toggleMask="true" class="w-full"></p-password>
-                                  <label>Contraseña</label>
-                              </span>
-                              <small *ngIf="f['password'].invalid && f['password'].touched" class="p-error">
-                                La contraseña debe tener al menos 10 caracteres y contener un símbolo especial (!@#$%^&*).
-                              </small>
+                              <div class="field-group">
+                                  <label class="field-label">Confirmar Contrasena</label>
+                                  <p-password formControlName="confirmPassword" toggleMask="true" class="field-input" placeholder="••••••••"></p-password>
+                                  <small *ngIf="registerForm.hasError('notMatching') && f['confirmPassword'].touched" class="p-error error-text">
+                                    Las contrasenass no coinciden.
+                                  </small>
+                              </div>
 
-                              <span class="p-float-label">
-                                  <p-password formControlName="confirmPassword" toggleMask="true" class="w-full"></p-password>
-                                  <label>Confirmar Contraseña</label>
-                              </span>
-                              <small *ngIf="registerForm.hasError('notMatching') && f['confirmPassword'].touched" class="p-error">
-                                Las contraseñas no coinciden.
-                              </small>
+                              <div class="button-group mt-5">
+                                  <p-button
+                                      label="Atras"
+                                      severity="secondary"
+                                      icon="pi pi-arrow-left"
+                                      (onClick)="activateCallback(1)"
+                                      class="btn-secondary">
+                                  </p-button>
 
-                          </div>
-
-                          <div class="flex justify-content-between mt-5">
-                              <p-button
-                                  label="Atrás"
-                                  severity="secondary"
-                                  icon="pi pi-arrow-left"
-                                  (onClick)="activateCallback(1)">
-                              </p-button>
-
-                              <p-button
-                                  label="Registrar"
-                                  icon="pi pi-check"
-                                  [disabled]="registerForm.invalid || registerForm.hasError('notMatching') || !esMayorDeEdad()"
-                                  (onClick)="registrar(); activateCallback(3)">
-                              </p-button>
+                                  <p-button
+                                      label="Registrar"
+                                      icon="pi pi-check"
+                                      iconPos="right"
+                                      [disabled]="registerForm.invalid || registerForm.hasError('notMatching') || !esMayorDeEdad()"
+                                      (onClick)="registrar(); activateCallback(3)"
+                                      class="btn-full">
+                                  </p-button>
+                              </div>
                           </div>
                       </ng-template>
                   </p-step-panel>
@@ -120,22 +122,23 @@
                   <!-- PASO 3 -->
                   <p-step-panel [value]="3">
                       <ng-template #content let-activateCallback="activateCallback">
+                          <div class="step-content">
+                              <div class="success-container">
+                                  <i class="pi pi-check-circle success-icon"></i>
+                                  <h3 class="success-title">Registro exitoso!</h3>
+                                  <p class="success-message">Tu cuenta ha sido creada correctamente.</p>
+                              </div>
 
-                          <div class="text-center">
-                              <i class="pi pi-check-circle text-green-500 text-6xl mb-3"></i>
-                              <h3 class="text-2xl font-bold mb-2">¡Registro exitoso!</h3>
-                              <p class="text-600">Tu cuenta ha sido creada correctamente.</p>
+                              <div class="button-group mt-5">
+                                  <p-button
+                                      label="Atras"
+                                      severity="secondary"
+                                      icon="pi pi-arrow-left"
+                                      (onClick)="activateCallback(2)"
+                                      class="btn-secondary">
+                                  </p-button>
+                              </div>
                           </div>
-
-                          <div class="flex justify-content-start mt-5">
-                              <p-button
-                                  label="Atrás"
-                                  severity="secondary"
-                                  icon="pi pi-arrow-left"
-                                  (onClick)="activateCallback(2)">
-                              </p-button>
-                          </div>
-
                       </ng-template>
                   </p-step-panel>
 
@@ -143,6 +146,5 @@
 
           </p-stepper>
         </form>
-
-    </div>
+  </div>
 </div>

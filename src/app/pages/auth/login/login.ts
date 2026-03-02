@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { AuthService } from '../../../services/auth.service';
 import { ToastModule } from 'primeng/toast';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -25,14 +26,20 @@ import { StepperModule } from 'primeng/stepper';
     StepperModule
   ],
   providers: [MessageService],
-  templateUrl: './login.html'
+  templateUrl: './login.html',
+  styleUrls: ['./login.css']
 })
 export class Login {
 
   activeStep: number = 1;
   loginForm: FormGroup;
 
-  constructor(private fb: FormBuilder, private messageService: MessageService) {
+  constructor(
+    private fb: FormBuilder,
+    private messageService: MessageService,
+    private router: Router,
+    private auth: AuthService
+  ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
@@ -49,7 +56,7 @@ export class Login {
     }
 
     const { email, password } = this.loginForm.value;
-    const validEmail = 'admin@demo.com';
+    const validEmail = '2023371057@uteq.edu.mx';
     const validPassword = 'Admin@12345';
 
     if (email === validEmail && password === validPassword) {
@@ -58,6 +65,10 @@ export class Login {
         summary: 'Acceso correcto',
         detail: 'Bienvenida al sistema'
       });
+
+      this.auth.login();
+      // redirigir al home después de mostrar el toast
+      setTimeout(() => this.router.navigate(['/home']), 800);
     } else {
       this.messageService.add({
         severity: 'error',

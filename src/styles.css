@@ -1,1 +1,89 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'primeicons/primeicons.css';
+:root {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+body {
+  background: linear-gradient(135deg, #f0f4ff, #e6f7ff);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* limit width of PrimeNG cards globally */
+p-card {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.surface-card {
+  width: 600px;
+  border: 1px solid #dfe7f1;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  background: #fff;
+  padding: 2rem;
+}
+
+h2 {
+  color: #2c3e50;
+  font-weight: bold;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+h2::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: #3b82f6;
+  margin: 0.5rem auto;
+  border-radius: 2px;
+}
+
+input,
+.p-password input,
+.p-datepicker input {
+  border-radius: 8px !important;
+}
+
+.p-float-label input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 6px rgba(59,130,246,0.3);
+}
+
+.p-error {
+  font-size: 0.85rem;
+  color: #dc2626;
+}
+
+.p-button {
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.p-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.p-step-header.p-highlight {
+  background: #3b82f6 !important;
+  color: #fff !important;
+  border-radius: 50%;
+}
+
+.p-step-header.p-completed {
+  background: #22c55e !important;
+  color: #fff !important;
+  border-radius: 50%;
+}
+
+.pi-check-circle {
+  color: #22c55e;
+}
+/* Global styles can go here */
+
+.page-container {
+  max-width: 900px;
+  margin: 0 auto;
+}

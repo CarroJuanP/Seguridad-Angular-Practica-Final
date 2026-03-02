@@ -3,11 +3,17 @@
   justify-content: center;
   gap: 2rem;
   margin-top: 5rem;
+  flex-wrap: wrap;
 }
 
 .card {
   width: 20rem;
   text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
 }
 
 .logo-container {

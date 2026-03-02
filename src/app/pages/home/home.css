@@ -1,0 +1,16 @@
+.home-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding-top: 2rem;
+}
+
+.home-container p-card {
+  width: 500px;
+}
+
+.home-container p-card p {
+  font-size: 1.1rem;
+  line-height: 1.5;
+}

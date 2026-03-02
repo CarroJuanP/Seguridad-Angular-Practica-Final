@@ -29,7 +29,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 })
 export class Register {
 
-  activeStep: number = 0;
+  activeStep: number = 1; // empieza en el paso 1
 
   registerForm: FormGroup;
 
@@ -38,15 +38,14 @@ export class Register {
       nombreCompleto: ['', Validators.required],
       fechaNacimiento: [null, Validators.required],
       direccion: ['', Validators.required],
-      // telefono solo números
       telefono: ['', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
       usuario: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [
         Validators.required,
         Validators.minLength(10),
-        // debe contener al menos un símbolo especial
-        Validators.pattern(/^(?=.[!@#$%^&])/)
+        // CORREGIDO: lookahead para símbolo especial
+        Validators.pattern(/^(?=.*[!@#$%^&])/)
       ]],
       confirmPassword: ['', Validators.required]
     }, { validators: this.passwordsMatchValidator });
@@ -70,7 +69,7 @@ export class Register {
   }
 
   // Validador a nivel de grupo, comprueba que password y confirmPassword coinciden
-  private passwordsMatchValidator(group: FormGroup) {
+  private passwordsMatchValidator(group: FormGroup): { [key: string]: any } | null {
     const pass = group.get('password')?.value;
     const confirm = group.get('confirmPassword')?.value;
     return pass && confirm && pass === confirm ? null : { notMatching: true };

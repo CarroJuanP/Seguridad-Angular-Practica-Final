@@ -1,56 +1,88 @@
 <p-toast></p-toast>
 
-<div class="min-h-screen flex align-items-center justify-content-center surface-ground"><p-card header="Login">
-  <form [formGroup]="loginForm" class="p-fluid">
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="card-header">
+      <i class="pi pi-lock header-icon"></i>
+      <h2>Acceso a tu cuenta</h2>
+    </div>
 
-    <p-stepper [(value)]="activeStep">
-      <p-step-list>
-        <p-step [value]="1"></p-step>
-        <p-step [value]="2"></p-step>
-      </p-step-list>
+    <form [formGroup]="loginForm" class="p-fluid">
+      <p-stepper [(value)]="activeStep" class="stepper-container">
+        <p-step-list>
+          <p-step [value]="1"></p-step>
+          <p-step [value]="2"></p-step>
+        </p-step-list>
 
-      <p-step-panels>
-        <p-step-panel [value]="1">
-          <ng-template #content let-activateCallback="activateCallback">
-            <div class="field">
-              <label>Email</label>
-              <input pInputText formControlName="email" type="email">
-              <small *ngIf="f['email'].invalid && f['email'].touched" class="p-error">Email inválido</small>
-            </div>
-            <p-button
-              label="Siguiente"
-              icon="pi pi-arrow-right"
-              (onClick)="activateCallback(2)"
-              [disabled]="f['email'].invalid">
-            </p-button>
-          </ng-template>
-        </p-step-panel>
+        <p-step-panels>
+          <!-- PASO 1 -->
+          <p-step-panel [value]="1">
+            <ng-template #content let-activateCallback="activateCallback">
+              <div class="step-content">
+                <div class="field-group">
+                  <label class="field-label">Correo Electrónico</label>
+                  <input pInputText formControlName="email" type="email" placeholder="tu@correo.com" class="field-input">
+                  <small *ngIf="f['email'].invalid && f['email'].touched" class="p-error error-text">
+                    Ingresa un email válido
+                  </small>
+                </div>
 
-        <p-step-panel [value]="2">
-          <ng-template #content let-activateCallback="activateCallback">
-            <div class="field">
-              <label>Password</label>
-              <p-password formControlName="password" [feedback]="false"></p-password>
-              <small *ngIf="f['password'].invalid && f['password'].touched" class="p-error">Contraseña requerida</small>
-            </div>
-            <div class="flex justify-content-between">
-              <p-button
-                label="Atrás"
-                severity="secondary"
-                icon="pi pi-arrow-left"
-                (onClick)="activateCallback(1)">
-              </p-button>
-              <p-button
-                label="Ingresar"
-                icon="pi pi-sign-in"
-                (onClick)="login()"
-                [disabled]="loginForm.invalid">
-              </p-button>
-            </div>
-          </ng-template>
-        </p-step-panel>
-      </p-step-panels>
-    </p-stepper>
+                <div class="button-group mt-4">
+                  <p-button
+                    label="Siguiente"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    (onClick)="activateCallback(2)"
+                    [disabled]="f['email'].invalid"
+                    class="btn-full">
+                  </p-button>
+                </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
 
-  </form>
-</p-card></div>
+          <!-- PASO 2 -->
+          <p-step-panel [value]="2">
+            <ng-template #content let-activateCallback="activateCallback">
+              <div class="step-content">
+                <div class="field-group">
+                  <label class="field-label">Contraseña</label>
+                  <p-password formControlName="password" [feedback]="false" placeholder="••••••••" toggleMask="true" ></p-password>
+                  <small *ngIf="f['password'].invalid && f['password'].touched" class="p-error error-text">
+                    La contraseña es requerida
+                  </small>
+                </div>
+
+                <div class="forgot-section mt-3">
+                  <a href="#" class="forgot-link">
+                    <i class="pi pi-question-circle mr-1"></i>¿Olvidaste tu contraseña?
+                  </a>
+                </div>
+
+                <div class="button-group mt-5">
+                  <p-button
+                    label="Atrás"
+                    severity="secondary"
+                    icon="pi pi-arrow-left"
+                    (onClick)="activateCallback(1)"
+                    class="btn-secondary">
+                  </p-button>
+
+                  <p-button
+                    label="Ingresar"
+                    icon="pi pi-sign-in"
+                    iconPos="right"
+                    (onClick)="login()"
+                    [disabled]="loginForm.invalid"
+                    class="btn-full">
+                  </p-button>
+                </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
+
+        </p-step-panels>
+      </p-stepper>
+    </form>
+  </div>
+</div>

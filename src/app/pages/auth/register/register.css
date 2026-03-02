@@ -1,9 +1,222 @@
-:host {
+/* Registro Wrapper */
+.register-wrapper {
+  min-height: 100vh;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-top: 40px;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
 }
 
-p-card {
-  width: 600px;
+/* Registro Card */
+.register-card {
+  width: 100%;
+  max-width: 550px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 3rem;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card Header */
+.card-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #f3f4f6;
+  padding-bottom: 1.5rem;
+}
+
+.header-icon {
+  font-size: 2.5rem;
+  color: #3b82f6;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.card-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.header-subtitle {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+/* Stepper */
+.stepper-container {
+  margin: 1.5rem 0;
+}
+
+.step-content {
+  padding: 1.5rem 0;
+}
+
+.step-label {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  color: #6b7280;
+}
+
+/* Fields */
+.field-group {
+  margin-bottom: 1.5rem;
+}
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.field-input {
+  width: 100% !important;
+  border-radius: 8px !important;
+  border: 1.5px solid #d1d5db !important;
+  padding: 0.875rem 1rem !important;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.field-input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.error-text {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #dc2626;
+}
+
+.age-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 6px;
+  color: #92400e;
+  font-size: 0.9rem;
+}
+
+.age-warning i {
+  color: #f59e0b;
+  font-size: 1.25rem;
+}
+
+/* Success Container */
+.success-container {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.success-icon {
+  font-size: 4rem;
+  color: #10b981;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.success-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.success-message {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Buttons Group */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn-full {
+  flex: 1;
+}
+
+.btn-secondary {
+  flex: 0.5;
+}
+
+/* Estilos para botones dentro del formulario */
+.register-card ::ng-deep .p-button {
+  border-radius: 8px;
+  padding: 0.875rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.register-card ::ng-deep .p-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.register-card ::ng-deep .p-button:active {
+  transform: translateY(0);
+}
+
+.register-card ::ng-deep .p-stepper .p-step-header {
+  border-radius: 50%;
+}
+
+.register-card ::ng-deep .p-step-header.p-highlight {
+  background-color: #3b82f6 !important;
+}
+
+.register-card ::ng-deep .p-step-header.p-completed {
+  background-color: #10b981 !important;
+}
+
+.register-card ::ng-deep .p-datepicker {
+  width: 100%;
+}
+
+.register-card ::ng-deep .p-password {
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .register-card {
+    padding: 1.5rem;
+  }
+
+  .card-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .btn-secondary {
+    flex: 1;
+  }
 }
