@@ -1,5 +1,23 @@
 <div class="home-container">
-  <p-card header="Bienvenido al Home" styleClass="p-shadow-3">
-    <p>Este es el panel principal de la aplicación. Selecciona alguna opción en el menú lateral para comenzar.</p>
+  <p-card header="Bienvenido Usuario" styleClass="p-shadow-3">
+    <p>Gracias por acceder a la aplicación. Puedes navegar por las diferentes secciones usando el menú lateral.</p>
+    <p>Si necesitas ayuda, no dudes en contactar al soporte técnico.</p>
+    <p>¡Disfruta tu experiencia!</p>
   </p-card>
+
+  <!-- Dashboard cards (Total & Advance) -->
+  <div class="dashboard-row">
+    <p-card header="Total" styleClass="small-card">
+      <div class="stat-wrap">
+        <div class="stat-number">{{ total }}</div>
+        <div class="stat-label">N</div>
+      </div>
+    </p-card>
+
+    <p-card header="Advance" styleClass="small-card">
+      <div class="advance-wrap">
+        <div class="advance-placeholder">--</div>
+      </div>
+    </p-card>
+  </div>
 </div>

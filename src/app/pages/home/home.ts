@@ -9,5 +9,8 @@ import { CardModule } from 'primeng/card';
   styleUrls: ['./home.css'],
 })
 export class Home {
+  // Simple dashboard variables (placeholder values)
+  total = 0; // Total count placeholder (update from service when available)
+  advance = 0; // Advance indicator placeholder (percentage or similar)
 
 }

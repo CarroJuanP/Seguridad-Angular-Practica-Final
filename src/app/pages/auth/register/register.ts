@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 
@@ -10,6 +10,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { DatePickerModule } from 'primeng/datepicker';
+import { DividerModule } from 'primeng/divider';
 
 @Component({
   selector: 'app-register',
@@ -23,32 +24,44 @@ import { DatePickerModule } from 'primeng/datepicker';
     ButtonModule,
     InputTextModule,
     PasswordModule,
-    DatePickerModule
+    DatePickerModule,
+    DividerModule
   ],
   providers: [MessageService]
 })
 export class Register {
 
-  activeStep: number = 1; // empieza en el paso 1
-
+  activeStep: number = 0;
   registerForm: FormGroup;
 
   constructor(private fb: FormBuilder, private messageService: MessageService) {
     this.registerForm = this.fb.group({
-      nombreCompleto: ['', Validators.required],
+      nombreCompleto: ['', [Validators.required, this.notOnlySpacesValidator]],
       fechaNacimiento: [null, Validators.required],
-      direccion: ['', Validators.required],
-      telefono: ['', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
-      usuario: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
+      direccion: ['', [Validators.required, this.notOnlySpacesValidator]],
+      telefono: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      usuario: ['', [Validators.required, this.noSpacesValidator]],
+      email: ['', [Validators.required, Validators.email, this.noSpacesValidator]],
       password: ['', [
         Validators.required,
         Validators.minLength(10),
-        // CORREGIDO: lookahead para símbolo especial
-        Validators.pattern(/^(?=.*[!@#$%^&])/)
+        Validators.pattern(/^(?=.*[!@#$%^&*])\S+$/), // al menos un símbolo especial y sin espacios
+        this.noSpacesValidator
       ]],
-      confirmPassword: ['', Validators.required]
+      confirmPassword: ['', [Validators.required, this.noSpacesValidator]]
     }, { validators: this.passwordsMatchValidator });
+  }
+
+  // Validador personalizado: no permite espacios
+  private noSpacesValidator(control: AbstractControl) {
+    const hasSpace = (control.value || '').includes(' ');
+    return hasSpace ? { noSpaces: true } : null;
+  }
+
+  // Validador personalizado: no acepta sólo espacios en blanco (permite espacios dentro)
+  private notOnlySpacesValidator(control: AbstractControl) {
+    const val = (control.value || '');
+    return typeof val === 'string' && val.trim().length === 0 ? { onlySpaces: true } : null;
   }
 
   esMayorDeEdad(): boolean {
@@ -69,7 +82,7 @@ export class Register {
   }
 
   // Validador a nivel de grupo, comprueba que password y confirmPassword coinciden
-  private passwordsMatchValidator(group: FormGroup): { [key: string]: any } | null {
+  private passwordsMatchValidator(group: FormGroup) {
     const pass = group.get('password')?.value;
     const confirm = group.get('confirmPassword')?.value;
     return pass && confirm && pass === confirm ? null : { notMatching: true };

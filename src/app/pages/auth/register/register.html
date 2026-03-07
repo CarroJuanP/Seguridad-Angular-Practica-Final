@@ -5,146 +5,167 @@
       <h2>Crear Cuenta</h2>
       <p class="header-subtitle">Completa tus datos para registrarte</p>
     </div>
+    <p-divider></p-divider>
 
     <form [formGroup]="registerForm">
       <p-stepper [(value)]="activeStep" class="stepper-container">
 
-              <!-- ICONOS -->
-              <p-step-list>
-                  <p-step [value]="1"></p-step>
-                  <p-step [value]="2"></p-step>
-                  <p-step [value]="3"></p-step>
-              </p-step-list>
+        <!-- ICONOS -->
+        <p-step-list>
+          <p-step [value]="1" label="Datos Personales"></p-step>
+          <p-step [value]="2" label="Credenciales"></p-step>
+          <p-step [value]="3" label="Confirmación"></p-step>
+        </p-step-list>
 
-              <p-step-panels>
+        <p-step-panels>
 
-                  <!-- PASO 1 -->
-                  <p-step-panel [value]="1">
-                      <ng-template #content let-activateCallback="activateCallback">
-                          <div class="step-content">
-                              <div class="field-group">
-                                  <label class="field-label">Nombre Completo</label>
-                                  <input pInputText formControlName="nombreCompleto" class="field-input" placeholder="Juan Pérez"/>
-                                  <small *ngIf="f['nombreCompleto'].invalid && f['nombreCompleto'].touched" class="p-error error-text">El nombre es obligatorio.</small>
-                              </div>
+          <!-- PASO 1 -->
+          <p-step-panel [value]="1">
+            <ng-template #content let-activateCallback="activateCallback">
+              <div class="step-content">
+                <div class="field-group">
+                  <label class="field-label">Nombre Completo</label>
+                  <input pInputText formControlName="nombreCompleto" class="field-input" placeholder="Juan Pérez"/>
+                  <small *ngIf="f['nombreCompleto'].hasError('onlySpaces') && f['nombreCompleto'].touched" class="p-error error-text">El campo no puede contener solo espacios.</small>
+                  <small *ngIf="f['nombreCompleto'].hasError('required') && f['nombreCompleto'].touched" class="p-error error-text">El nombre es obligatorio.</small>
+                </div>
 
-                              <div class="field-group">
-                                  <label class="field-label">Fecha de Nacimiento</label>
-                                  <p-datepicker formControlName="fechaNacimiento" class="field-input" appendTo="body" [showIcon]="true"></p-datepicker>
-                                  <small *ngIf="f['fechaNacimiento'].invalid && f['fechaNacimiento'].touched" class="p-error error-text">La fecha es obligatoria.</small>
-                              </div>
+                <div class="field-group">
+                  <label class="field-label">Fecha de Nacimiento</label>
+                  <p-datepicker formControlName="fechaNacimiento" class="field-input" appendTo="body" [showIcon]="true"></p-datepicker>
+                  <small *ngIf="f['fechaNacimiento'].invalid && f['fechaNacimiento'].touched" class="p-error error-text">
+                    La fecha es obligatoria.
+                  </small>
+                </div>
 
-                              <div class="field-group">
-                                  <label class="field-label">Dirección</label>
-                                  <input pInputText formControlName="direccion" class="field-input" placeholder="Calle Principal 123"/>
-                                  <small *ngIf="f['direccion'].invalid && f['direccion'].touched" class="p-error error-text">La dirección es obligatoria.</small>
-                              </div>
+                <div class="field-group">
+                  <label class="field-label">Dirección</label>
+                  <input pInputText formControlName="direccion" class="field-input" placeholder="Calle Principal 123"/>
+                  <small *ngIf="f['direccion'].hasError('onlySpaces') && f['direccion'].touched" class="p-error error-text">El campo no puede contener solo espacios.</small>
+                  <small *ngIf="f['direccion'].hasError('required') && f['direccion'].touched" class="p-error error-text">La dirección es obligatoria.</small>
+                </div>
 
-                              <div class="field-group">
-                                  <label class="field-label">Teléfono</label>
-                                  <input pInputText formControlName="telefono" class="field-input" placeholder="3001234567"/>
-                                  <small *ngIf="f['telefono'].invalid && f['telefono'].touched" class="p-error error-text">Teléfono inválido, solo números.</small>
-                              </div>
+                <div class="field-group">
+                  <label class="field-label">Teléfono</label>
+                  <input pInputText formControlName="telefono" class="field-input" placeholder="3001234567" maxlength="10"/>
+                  <small *ngIf="f['telefono'].hasError('required') && f['telefono'].touched" class="p-error error-text">El teléfono es obligatorio.</small>
+                  <small *ngIf="f['telefono'].hasError('pattern') && f['telefono'].touched" class="p-error error-text">El teléfono debe contener exactamente 10 dígitos numéricos.</small>
+                </div>
 
-                              <div *ngIf="!esMayorDeEdad() && f['fechaNacimiento'].touched" class="age-warning">
-                                <i class="pi pi-exclamation-triangle"></i>
-                                <span>Debes ser mayor de 18 años para continuar</span>
-                              </div>
+                <div *ngIf="!esMayorDeEdad() && f['fechaNacimiento'].touched" class="age-warning">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span>Debes ser mayor de 18 años para continuar</span>
+                </div>
 
-                              <div class="button-group mt-5">
-                                  <p-button
-                                      label="Continuar"
-                                      icon="pi pi-arrow-right"
-                                      iconPos="right"
-                                      [disabled]="f['nombreCompleto'].invalid || f['fechaNacimiento'].invalid || f['direccion'].invalid || f['telefono'].invalid || !esMayorDeEdad()"
-                                      (onClick)="activateCallback(2)"
-                                      class="btn-full">
-                                  </p-button>
-                              </div>
-                          </div>
-                      </ng-template>
-                  </p-step-panel>
+                <div class="button-group mt-5">
+                  <p-button
+                    label="Continuar"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    [disabled]="f['nombreCompleto'].invalid || f['fechaNacimiento'].invalid || f['direccion'].invalid || f['telefono'].invalid || !esMayorDeEdad()"
+                    (onClick)="activateCallback(2)"
+                    class="btn-full">
+                  </p-button>
+                </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
 
-                  <!-- PASO 2 -->
-                  <p-step-panel [value]="2">
-                      <ng-template #content let-activateCallback="activateCallback">
-                          <div class="step-content">
-                              <div class="field-group">
-                                  <label class="field-label">Usuario</label>
-                                  <input pInputText formControlName="usuario" class="field-input" placeholder="mi_usuario"/>
-                                  <small *ngIf="f['usuario'].invalid && f['usuario'].touched" class="p-error error-text">El usuario es obligatorio.</small>
-                              </div>
+          <!-- PASO 2 -->
+          <p-step-panel [value]="2">
+            <ng-template #content let-activateCallback="activateCallback">
+              <div class="step-content">
+                <div class="field-group">
+                  <label class="field-label">Usuario</label>
+                  <input pInputText formControlName="usuario" class="field-input" placeholder="mi_usuario"/>
+                  <small *ngIf="f['usuario'].hasError('noSpaces') && f['usuario'].touched" class="p-error error-text">
+                    No se permiten espacios en el usuario.
+                  </small>
+                  <small *ngIf="f['usuario'].invalid && f['usuario'].touched && !f['usuario'].hasError('noSpaces')" class="p-error error-text">
+                    El usuario es obligatorio.
+                  </small>
+                </div>
 
-                              <div class="field-group">
-                                  <label class="field-label">Correo Electropnico</label>
-                                  <input pInputText formControlName="email" type="email" class="field-input" placeholder="tu@correo.com"/>
-                                  <small *ngIf="f['email'].invalid && f['email'].touched" class="p-error error-text">Introduce un email valido.</small>
-                              </div>
+                <div class="field-group">
+                  <label class="field-label">Correo Electrónico</label>
+                  <input pInputText formControlName="email" type="email" class="field-input" placeholder="tu@correo.com"/>
+                  <small *ngIf="f['email'].hasError('noSpaces') && f['email'].touched" class="p-error error-text">
+                    No se permiten espacios en el correo.
+                  </small>
+                  <small *ngIf="f['email'].invalid && f['email'].touched && !f['email'].hasError('noSpaces')" class="p-error error-text">
+                    Introduce un email válido.
+                  </small>
+                </div>
 
-                              <div class="field-group">
-                                  <label class="field-label">Contrasena</label>
-                                  <p-password formControlName="password" toggleMask="true" class="field-input" placeholder="••••••••"></p-password>
-                                  <small *ngIf="f['password'].invalid && f['password'].touched" class="p-error error-text">
-                                    Min. 10 caracteres con un simbolo especial (!@#$%^&*).
-                                  </small>
-                              </div>
+                <div class="field-group">
+                  <label class="field-label">Contraseña</label>
+                  <p-password formControlName="password" toggleMask="true" class="field-input" placeholder="••••••••"></p-password>
+                  <small *ngIf="f['password'].hasError('noSpaces') && f['password'].touched" class="p-error error-text">
+                    No se permiten espacios en la contraseña.
+                  </small>
+                  <small *ngIf="f['password'].invalid && f['password'].touched && !f['password'].hasError('noSpaces')" class="p-error error-text">
+                    Min. 10 caracteres con un símbolo especial (!@#$%^&*).
+                  </small>
+                </div>
 
-                              <div class="field-group">
-                                  <label class="field-label">Confirmar Contrasena</label>
-                                  <p-password formControlName="confirmPassword" toggleMask="true" class="field-input" placeholder="••••••••"></p-password>
-                                  <small *ngIf="registerForm.hasError('notMatching') && f['confirmPassword'].touched" class="p-error error-text">
-                                    Las contrasenass no coinciden.
-                                  </small>
-                              </div>
+                <div class="field-group">
+                  <label class="field-label">Confirmar Contraseña</label>
+                  <p-password formControlName="confirmPassword" toggleMask="true" class="field-input" placeholder="••••••••"></p-password>
+                  <small *ngIf="f['confirmPassword'].hasError('noSpaces') && f['confirmPassword'].touched" class="p-error error-text">
+                    No se permiten espacios en la confirmación.
+                  </small>
+                  <small *ngIf="registerForm.hasError('notMatching') && f['confirmPassword'].touched" class="p-error error-text">
+                    Las contraseñas no coinciden.
+                  </small>
+                </div>
 
-                              <div class="button-group mt-5">
-                                  <p-button
-                                      label="Atras"
-                                      severity="secondary"
-                                      icon="pi pi-arrow-left"
-                                      (onClick)="activateCallback(1)"
-                                      class="btn-secondary">
-                                  </p-button>
+                <div class="button-group mt-5">
+                  <p-button
+                    label="Atrás"
+                    severity="secondary"
+                    icon="pi pi-arrow-left"
+                    (onClick)="activateCallback(1)"
+                    class="btn-secondary">
+                  </p-button>
 
-                                  <p-button
-                                      label="Registrar"
-                                      icon="pi pi-check"
-                                      iconPos="right"
-                                      [disabled]="registerForm.invalid || registerForm.hasError('notMatching') || !esMayorDeEdad()"
-                                      (onClick)="registrar(); activateCallback(3)"
-                                      class="btn-full">
-                                  </p-button>
-                              </div>
-                          </div>
-                      </ng-template>
-                  </p-step-panel>
+                  <p-button
+                    label="Registrar"
+                    icon="pi pi-check"
+                    iconPos="right"
+                    [disabled]="registerForm.invalid || registerForm.hasError('notMatching') || !esMayorDeEdad()"
+                    (onClick)="registrar(); activateCallback(3)"
+                    class="btn-full">
+                  </p-button>
+                </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
 
-                  <!-- PASO 3 -->
-                  <p-step-panel [value]="3">
-                      <ng-template #content let-activateCallback="activateCallback">
-                          <div class="step-content">
-                              <div class="success-container">
-                                  <i class="pi pi-check-circle success-icon"></i>
-                                  <h3 class="success-title">Registro exitoso!</h3>
-                                  <p class="success-message">Tu cuenta ha sido creada correctamente.</p>
-                              </div>
+          <!-- PASO 3 -->
+          <p-step-panel [value]="3">
+            <ng-template #content let-activateCallback="activateCallback">
+              <div class="step-content">
+                <div class="success-container">
+                  <i class="pi pi-check-circle success-icon"></i>
+                  <h3 class="success-title">Registro exitoso!</h3>
+                  <p class="success-message">Tu cuenta ha sido creada correctamente.</p>
+                </div>
 
-                              <div class="button-group mt-5">
-                                  <p-button
-                                      label="Atras"
-                                      severity="secondary"
-                                      icon="pi pi-arrow-left"
-                                      (onClick)="activateCallback(2)"
-                                      class="btn-secondary">
-                                  </p-button>
-                              </div>
-                          </div>
-                      </ng-template>
-                  </p-step-panel>
+                <div class="button-group mt-5">
+                  <p-button
+                    label="Atrás"
+                    severity="secondary"
+                    icon="pi pi-arrow-left"
+                    (onClick)="activateCallback(2)"
+                    class="btn-secondary">
+                  </p-button>
+                </div>
+              </div>
+            </ng-template>
+          </p-step-panel>
 
-              </p-step-panels>
-
-          </p-stepper>
-        </form>
+        </p-step-panels>
+      </p-stepper>
+    </form>
   </div>
 </div>

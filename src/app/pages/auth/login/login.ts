@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../services/auth.service';
 import { ToastModule } from 'primeng/toast';
+import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
@@ -23,7 +24,8 @@ import { StepperModule } from 'primeng/stepper';
     InputTextModule,
     PasswordModule,
     CardModule,
-    StepperModule
+    StepperModule,
+    DividerModule
   ],
   providers: [MessageService],
   templateUrl: './login.html',
@@ -34,6 +36,12 @@ export class Login {
   activeStep: number = 1;
   loginForm: FormGroup;
 
+  private notOnlySpacesValidator(control: AbstractControl) {
+    const v = control.value;
+    if (v === null || v === undefined) return null;
+    return typeof v === 'string' && v.trim().length === 0 ? { onlySpaces: true } : null;
+  }
+
   constructor(
     private fb: FormBuilder,
     private messageService: MessageService,
@@ -41,8 +49,8 @@ export class Login {
     private auth: AuthService
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
+      email: ['', [Validators.required, Validators.email, this.notOnlySpacesValidator]],
+      password: ['', [Validators.required, this.notOnlySpacesValidator]]
     });
   }
 

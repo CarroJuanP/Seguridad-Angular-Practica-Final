@@ -6,6 +6,7 @@
       <i class="pi pi-lock header-icon"></i>
       <h2>Acceso a tu cuenta</h2>
     </div>
+    <p-divider></p-divider>
 
     <form [formGroup]="loginForm" class="p-fluid">
       <p-stepper [(value)]="activeStep" class="stepper-container">
@@ -22,9 +23,9 @@
                 <div class="field-group">
                   <label class="field-label">Correo Electrónico</label>
                   <input pInputText formControlName="email" type="email" placeholder="tu@correo.com" class="field-input">
-                  <small *ngIf="f['email'].invalid && f['email'].touched" class="p-error error-text">
-                    Ingresa un email válido
-                  </small>
+                  <small *ngIf="f['email'].hasError('onlySpaces') && f['email'].touched" class="p-error error-text">El campo no puede contener solo espacios.</small>
+                  <small *ngIf="f['email'].hasError('required') && f['email'].touched" class="p-error error-text">El email es obligatorio.</small>
+                  <small *ngIf="f['email'].hasError('email') && !f['email'].hasError('onlySpaces') && f['email'].touched" class="p-error error-text">Ingresa un email válido.</small>
                 </div>
 
                 <div class="button-group mt-4">
@@ -47,10 +48,9 @@
               <div class="step-content">
                 <div class="field-group">
                   <label class="field-label">Contraseña</label>
-                  <p-password formControlName="password" [feedback]="false" placeholder="••••••••" toggleMask="true" ></p-password>
-                  <small *ngIf="f['password'].invalid && f['password'].touched" class="p-error error-text">
-                    La contraseña es requerida
-                  </small>
+                  <p-password formControlName="password" [feedback]="false" placeholder="••••••••" toggleMask="true"></p-password>
+                  <small *ngIf="f['password'].hasError('onlySpaces') && f['password'].touched" class="p-error error-text">La contraseña no puede contener solo espacios.</small>
+                  <small *ngIf="f['password'].hasError('required') && f['password'].touched" class="p-error error-text">La contraseña es requerida</small>
                 </div>
 
                 <div class="forgot-section mt-3">

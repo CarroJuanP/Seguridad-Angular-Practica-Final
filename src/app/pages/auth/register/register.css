@@ -1,20 +1,20 @@
-/* Registro Wrapper */
+/** Registro Wrapper **/
 .register-wrapper {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: linear-gradient(135deg, #f0f4ff 0%, #e6f7ff 100%);
+  background: linear-gradient(135deg, rgba(124,58,237,0.02) 0%, rgba(6,182,212,0.02) 100%);
 }
 
-/* Registro Card */
+/** Registro Card **/
 .register-card {
   width: 100%;
   max-width: 550px;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 40px rgba(59, 130, 246, 0.08);
   padding: 3rem;
   animation: slideUp 0.3s ease;
 }
@@ -30,7 +30,7 @@
   }
 }
 
-/* Card Header */
+/** Card Header **/
 .card-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -40,7 +40,7 @@
 
 .header-icon {
   font-size: 2.5rem;
-  color: #3b82f6;
+  color: var(--accent-color);
   display: block;
   margin-bottom: 0.5rem;
 }
@@ -53,12 +53,18 @@
 }
 
 .header-subtitle {
-  color: #6b7280;
+  color: #374151;
   font-size: 0.95rem;
   margin-top: 0.5rem;
 }
 
-/* Stepper */
+/* colorful accent under header */
+.register-card .card-header {
+  background: linear-gradient(90deg, rgba(124,58,237,0.08), rgba(6,182,212,0.06));
+  border-radius: 12px 12px 8px 8px;
+}
+
+/** Stepper **/
 .stepper-container {
   margin: 1.5rem 0;
 }
@@ -73,7 +79,7 @@
   color: #6b7280;
 }
 
-/* Fields */
+/** Fields **/
 .field-group {
   margin-bottom: 1.5rem;
 }
@@ -96,8 +102,8 @@
 }
 
 .field-input:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 4px rgba(124,58,237,0.12) !important;
 }
 
 .error-text {
@@ -124,7 +130,7 @@
   font-size: 1.25rem;
 }
 
-/* Success Container */
+/** Success Container **/
 .success-container {
   text-align: center;
   padding: 2rem 0;
@@ -132,7 +138,7 @@
 
 .success-icon {
   font-size: 4rem;
-  color: #10b981;
+  color: var(--secondary-color);
   display: block;
   margin-bottom: 1rem;
 }
@@ -150,7 +156,7 @@
   margin: 0;
 }
 
-/* Buttons Group */
+/** Buttons Group **/
 .button-group {
   display: flex;
   gap: 1rem;
@@ -173,6 +179,16 @@
   transition: all 0.2s ease;
 }
 
+.register-card ::ng-deep .p-button.p-button-primary {
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+.register-card ::ng-deep .p-button.p-button-primary:hover {
+  filter: brightness(0.95);
+}
+
 .register-card ::ng-deep .p-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -187,11 +203,11 @@
 }
 
 .register-card ::ng-deep .p-step-header.p-highlight {
-  background-color: #3b82f6 !important;
+  background-color: var(--primary-color) !important;
 }
 
 .register-card ::ng-deep .p-step-header.p-completed {
-  background-color: #10b981 !important;
+  background-color: var(--secondary-color) !important;
 }
 
 .register-card ::ng-deep .p-datepicker {

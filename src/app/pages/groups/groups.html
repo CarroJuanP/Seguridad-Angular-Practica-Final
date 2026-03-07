@@ -1,0 +1,60 @@
+<div class="groups-container">
+    <p-toast></p-toast>
+    <div class="groups-header">
+        <h1>Grupos</h1>
+        <button pButton type="button" icon="pi pi-plus" label="Nuevo Grupo" (click)="openNew()" class="p-button-primary"></button>
+    </div>
+    <p-table [value]="groups" [paginator]="true" [rows]="10" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Nombre</th>
+                <th>Nivel</th>
+                <th>Autor</th>
+                <th>Integrantes</th>
+                <th>Tickets</th>
+                <th>Descripción</th>
+                <th>Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-group>
+            <tr>
+                <td>{{ group.nombre }}</td>
+                <td><span class="nivel-badge" [ngClass]="'nivel-' + group.nivel.toLowerCase()">{{ group.nivel }}</span></td>
+                <td>{{ group.autor }}</td>
+                <td>{{ group.integrantes }}</td>
+                <td>{{ group.tickets }}</td>
+                <td>{{ group.descripcion }}</td>
+                <td>
+                    <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-warning p-button-sm" (click)="editGroup(group)"></button>
+                    <button pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm" (click)="deleteGroup(group)" style="margin-left: 0.5rem"></button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+    <p-dialog [(visible)]="displayDialog" [header]="isNew ? 'Nuevo Grupo' : 'Editar Grupo'" [modal]="true" [style]="{width: '550px'}" (onHide)="hideDialog()">
+        <div class="form-group">
+            <label>Nombre:</label>
+            <input pInputText [(ngModel)]="formData.nombre" class="full-width" />
+        </div>
+        <div class="form-group">
+            <label>Nivel:</label>
+            <input pInputText [(ngModel)]="formData.nivel" class="full-width" />
+        </div>
+        <div class="form-group">
+            <label>Integrantes:</label>
+            <input pInputText [(ngModel)]="formData.integrantes" type="number" class="full-width" />
+        </div>
+        <div class="form-group">
+            <label>Tickets:</label>
+            <input pInputText [(ngModel)]="formData.tickets" type="number" class="full-width" />
+        </div>
+        <div class="form-group">
+            <label>Descripción:</label>
+            <textarea [(ngModel)]="formData.descripcion" class="full-width" rows="4"></textarea>
+        </div>
+        <ng-template pTemplate="footer">
+            <button pButton type="button" label="Cancelar" icon="pi pi-times" (click)="hideDialog()" class="p-button-secondary"></button>
+            <button pButton type="button" label="Guardar" icon="pi pi-check" (click)="saveGroup()" class="p-button-primary"></button>
+        </ng-template>
+    </p-dialog>
+</div>

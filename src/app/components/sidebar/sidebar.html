@@ -1,11 +1,27 @@
 <div class="sidebar p-shadow-2">
+  <!-- Header del sidebar -->
   <div class="sidebar-header text-center mb-4">
-    <i class="pi pi-user" style="font-size:2rem"></i>
-    <div class="mt-1">Usuario</div>
+    <i class="pi pi-user" style="font-size:2rem; color:#3b82f6;"></i>
+    <div class="mt-1 font-bold">Usuario</div>
+    <small class="text-muted">Administrador</small>
   </div>
+
+  <!-- Título del menú -->
   <h3 class="text-center mb-4">Menú</h3>
 
-  <button pButton label="Home" icon="pi pi-home" routerLink="/home" class="w-full mb-2"></button>
+  <!-- Botones principales -->
+  <button pButton label="Home" icon="pi pi-home" routerLink="/home" class="w-full mb-2 p-button-rounded"></button>
+  <button pButton label="Grupos" icon="pi pi-users" routerLink="/groups" class="w-full mb-2 p-button-rounded"></button>
+  <button pButton label="Mi Perfil" icon="pi pi-user" routerLink="/profile" class="w-full mb-4 p-button-rounded"></button>
 
-  <button pButton label="Cerrar Sesión" icon="pi pi-sign-out" severity="danger" (onClick)="logout()" class="w-full"></button>
+  <!-- Separador -->
+  <hr style="margin:1rem 0; border-color:#e5e7eb;">
+
+  <!-- Botón de cierre de sesión -->
+  <button pButton label="Cerrar Sesión" icon="pi pi-sign-out" severity="danger" (onClick)="logout()" class="w-full p-button-rounded"></button>
+
+  <!-- Footer opcional -->
+  <div class="sidebar-footer text-center mt-4 text-sm text-muted">
+    <i class="pi pi-info-circle"></i> Versión 1.0.0
+  </div>
 </div>
