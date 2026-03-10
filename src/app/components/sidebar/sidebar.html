@@ -1,21 +1,16 @@
 <div class="sidebar p-shadow-2">
-  <!-- Header del sidebar -->
   <div class="sidebar-header text-center mb-4">
-    <i class="pi pi-user" style="font-size:2rem; color:#3b82f6;"></i>
-    <div class="mt-1 font-bold">Usuario</div>
-    <small class="text-muted">Administrador</small>
+    <i class="pi pi-user" style="font-size:2rem; color:#60a5fa;"></i>
+    <div class="mt-1 font-bold">{{ currentUserName }}</div>
+    <small class="text-muted">{{ currentUserEmail }}</small>
   </div>
 
-  <!-- Título del menú -->
-  <h3 class="text-center mb-4">Menú</h3>
+  <h3 class="text-center mb-4">Navegacion</h3>
 
-  <!-- Botones principales -->
-  <!-- Home: visible para todos -->
-  <button pButton label="Home" icon="pi pi-home" routerLink="/home" class="w-full mb-2 p-button-rounded"></button>
+  <button pButton label="Dashboard" icon="pi pi-home" routerLink="/home" class="w-full mb-2 p-button-rounded"></button>
 
-  <!-- Grupos: requiere permisos de grupos -->
   <button
-    *ifHasPermission="permissions.GROUPS_VIEW"
+    *ifHasPermission="permissions.GROUP_VIEW"
     pButton
     label="Grupos"
     icon="pi pi-users"
@@ -23,47 +18,27 @@
     class="w-full mb-2 p-button-rounded"
   ></button>
 
-  <!-- Usuarios: requiere permisos de usuarios (admin) -->
   <button
-    *ifHasPermission="permissions.USERS_VIEW"
-    pButton
-    label="Usuarios"
-    icon="pi pi-user-multiple"
-    routerLink="/users"
-    class="w-full mb-2 p-button-rounded"
-  ></button>
-
-  <!-- Tickets: requiere permisos de tickets -->
-  <button
-    *ifHasPermission="permissions.TICKETS_VIEW"
+    *ifHasPermission="permissions.TICKET_READ"
     pButton
     label="Tickets"
     icon="pi pi-list"
     routerLink="/tickets"
+    class="w-full mb-2 p-button-rounded"
+  ></button>
+
+  <button pButton label="Mi Perfil" icon="pi pi-user" routerLink="/profile" class="w-full mb-2 p-button-rounded"></button>
+
+  <button
+    *ifHasPermission="permissions.USER_VIEW"
+    pButton
+    label="Gestion Usuarios"
+    icon="pi pi-id-card"
+    routerLink="/users"
     class="w-full mb-4 p-button-rounded"
   ></button>
 
-  <!-- Mi Perfil: visible para todos -->
-  <button pButton label="Mi Perfil" icon="pi pi-user" routerLink="/profile" class="w-full mb-4 p-button-rounded"></button>
+  <hr style="margin:1rem 0; border-color:#334155;">
 
-  <!-- Separador -->
-  <hr style="margin:1rem 0; border-color:#e5e7eb;">
-
-  <!-- Botón de cierre de sesión -->
-  <button pButton label="Cerrar Sesión" icon="pi pi-sign-out" severity="danger" (click)="logout()" class="w-full p-button-rounded"></button>
-
-  <!-- Footer opcional -->
-  <div class="sidebar-footer text-center mt-4 text-sm text-muted">
-    <i class="pi pi-info-circle"></i> Versión 1.0.0
-  </div>
-
-  <div class="mt-4 pt-3 border-top-1 border-300">
-    <div class="text-center text-xs font-bold mb-2 text-500">DEMO: CAMBIAR ROL</div>
-    <div class="flex flex-column gap-2 px-2">
-        <button pButton label="Soy Admin" icon="pi pi-shield" class="p-button-sm p-button-outlined p-button-success w-full" (click)="loginAsAdmin()"></button>
-        <button pButton label="Soy Usuario" icon="pi pi-user" class="p-button-sm p-button-outlined p-button-info w-full" (click)="loginAsUser()"></button>
-        <button pButton label="Soy Viewer" icon="pi pi-eye" class="p-button-sm p-button-outlined p-button-warning w-full" (click)="loginAsViewer()"></button>
-        <button pButton label="Soy Editor" icon="pi pi-file-edit" class="p-button-sm p-button-outlined p-button-help w-full" (click)="loginAsEditor()"></button>
-    </div>
-  </div>
+  <button pButton label="Cerrar Sesion" icon="pi pi-sign-out" severity="danger" (click)="logout()" class="w-full p-button-rounded"></button>
 </div>

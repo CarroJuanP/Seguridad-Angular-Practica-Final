@@ -12,7 +12,7 @@ import { PermissionsService } from './services/permissions.service';
 })
 export class AppComponent implements OnInit {
   title = 'practica2';
-  private permissionsService = inject(PermissionsService);
+  private readonly permissionsService = inject(PermissionsService);
 
   ngOnInit() {
     // 🔐 Los permisos se inicializan automáticamente en PermissionsService

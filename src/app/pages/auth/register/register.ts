@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, AbstractControlOptions } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 
@@ -34,12 +34,12 @@ export class Register {
   activeStep: number = 0;
   registerForm: FormGroup;
 
-  constructor(private fb: FormBuilder, private messageService: MessageService) {
+  constructor(private readonly fb: FormBuilder, private readonly messageService: MessageService) {
     this.registerForm = this.fb.group({
       nombreCompleto: ['', [Validators.required, this.notOnlySpacesValidator]],
       fechaNacimiento: [null, Validators.required],
       direccion: ['', [Validators.required, this.notOnlySpacesValidator]],
-      telefono: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      telefono: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
       usuario: ['', [Validators.required, this.noSpacesValidator]],
       email: ['', [Validators.required, Validators.email, this.noSpacesValidator]],
       password: ['', [
@@ -49,7 +49,7 @@ export class Register {
         this.noSpacesValidator
       ]],
       confirmPassword: ['', [Validators.required, this.noSpacesValidator]]
-    }, { validators: this.passwordsMatchValidator });
+    }, { validators: this.passwordsMatchValidator } as AbstractControlOptions);
   }
 
   // Validador personalizado: no permite espacios

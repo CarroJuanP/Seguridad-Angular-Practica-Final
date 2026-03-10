@@ -1,59 +1,45 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { AuthService } from '../../../services/auth.service';
-import { PermissionsService } from '../../../services/permissions.service';
-import { UserPermissions, ROLE_PERMISSIONS } from '../../../models/permissions.model';
 import { ToastModule } from 'primeng/toast';
-import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { CardModule } from 'primeng/card';
-import { StepperModule } from 'primeng/stepper';
+import { DividerModule } from 'primeng/divider';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     ReactiveFormsModule,
     ToastModule,
     ButtonModule,
     InputTextModule,
     PasswordModule,
     CardModule,
-    StepperModule,
-    DividerModule
+    DividerModule,
   ],
   providers: [MessageService],
   templateUrl: './login.html',
-  styleUrls: ['./login.css']
+  styleUrls: ['./login.css'],
 })
 export class Login {
-
-  activeStep: number = 1;
   loginForm: FormGroup;
 
-  private notOnlySpacesValidator(control: AbstractControl) {
-    const v = control.value;
-    if (v === null || v === undefined) return null;
-    return typeof v === 'string' && v.trim().length === 0 ? { onlySpaces: true } : null;
-  }
-
   constructor(
-    private fb: FormBuilder,
-    private messageService: MessageService,
-    private router: Router,
-    private auth: AuthService,
-    private permissionsService: PermissionsService
+    private readonly fb: FormBuilder,
+    private readonly messageService: MessageService,
+    private readonly router: Router,
+    private readonly auth: AuthService,
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email, this.notOnlySpacesValidator]],
-      password: ['', [Validators.required, this.notOnlySpacesValidator]]
+      password: ['', [Validators.required, this.notOnlySpacesValidator]],
     });
   }
 
@@ -61,40 +47,41 @@ export class Login {
     return this.loginForm.controls;
   }
 
-  login() {
+  login(): void {
     if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched();
       return;
     }
 
     const { email, password } = this.loginForm.value;
-    const validEmail = '2023371057@uteq.edu.mx';
-    const validPassword = 'Admin@12345';
 
-    if (email === validEmail && password === validPassword) {
+    this.auth.login(email, password).subscribe(user => {
+      if (!user) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Acceso denegado',
+          detail: 'Credenciales invalidas.',
+        });
+        return;
+      }
+
       this.messageService.add({
         severity: 'success',
-        summary: 'Acceso correcto',
-        detail: 'Bienvenida al sistema'
+        summary: 'Sesion iniciada',
+        detail: `Bienvenido ${user.name}.`,
       });
 
-      // simular decodificación de JWT y cargar permisos
-      const user: UserPermissions = {
-        userId: '1',
-        username: 'Usuario Demo',
-        email,
-        role: 'user',
-        permissions: ROLE_PERMISSIONS['user']
-      };
-      this.permissionsService.setUserPermissions(user);
-      this.auth.login();
-      // redirigir al home después de mostrar el toast
-      setTimeout(() => this.router.navigate(['/home']), 800);
-    } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Credenciales incorrectas'
-      });
+      // Navega siempre al dashboard (/home) - auth.service ya auto-selecciona el primer grupo
+      setTimeout(() => this.router.navigate(['/home']), 500);
+    });
+  }
+
+  private notOnlySpacesValidator(control: AbstractControl) {
+    const value = control.value;
+    if (value === null || value === undefined) {
+      return null;
     }
+
+    return typeof value === 'string' && value.trim().length === 0 ? { onlySpaces: true } : null;
   }
 }

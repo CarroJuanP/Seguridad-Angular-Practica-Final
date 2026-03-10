@@ -4,85 +4,33 @@
   <div class="login-card">
     <div class="card-header">
       <i class="pi pi-lock header-icon"></i>
-      <h2>Acceso a tu cuenta</h2>
+      <h2>Iniciar sesion</h2>
+      <p class="mb-0">Accede y luego selecciona tu grupo de trabajo.</p>
     </div>
+
     <p-divider></p-divider>
 
-    <form [formGroup]="loginForm" class="p-fluid">
-      <p-stepper [(value)]="activeStep" class="stepper-container">
-        <p-step-list>
-          <p-step [value]="1"></p-step>
-          <p-step [value]="2"></p-step>
-        </p-step-list>
+    <form [formGroup]="loginForm" class="p-fluid" (ngSubmit)="login()">
+      <div class="field-group">
+        <label class="field-label" for="loginEmail">Correo electronico</label>
+        <input id="loginEmail" pInputText formControlName="email" type="email" placeholder="tu@correo.com" class="field-input" />
+        <small *ngIf="f['email'].hasError('required') && f['email'].touched" class="p-error error-text">El email es obligatorio.</small>
+        <small *ngIf="f['email'].hasError('email') && f['email'].touched" class="p-error error-text">Ingresa un email valido.</small>
+      </div>
 
-        <p-step-panels>
-          <!-- PASO 1 -->
-          <p-step-panel [value]="1">
-            <ng-template #content let-activateCallback="activateCallback">
-              <div class="step-content">
-                <div class="field-group">
-                  <label class="field-label">Correo Electrónico</label>
-                  <input pInputText formControlName="email" type="email" placeholder="tu@correo.com" class="field-input">
-                  <small *ngIf="f['email'].hasError('onlySpaces') && f['email'].touched" class="p-error error-text">El campo no puede contener solo espacios.</small>
-                  <small *ngIf="f['email'].hasError('required') && f['email'].touched" class="p-error error-text">El email es obligatorio.</small>
-                  <small *ngIf="f['email'].hasError('email') && !f['email'].hasError('onlySpaces') && f['email'].touched" class="p-error error-text">Ingresa un email válido.</small>
-                </div>
+      <div class="field-group">
+        <label class="field-label" for="loginPassword">Contrasena</label>
+        <p-password inputId="loginPassword" formControlName="password" [feedback]="false" placeholder="********" toggleMask="true"></p-password>
+        <small *ngIf="f['password'].hasError('required') && f['password'].touched" class="p-error error-text">La contrasena es obligatoria.</small>
+      </div>
 
-                <div class="button-group mt-4">
-                  <p-button
-                    label="Siguiente"
-                    icon="pi pi-arrow-right"
-                    iconPos="right"
-                    (onClick)="activateCallback(2)"
-                    [disabled]="f['email'].invalid"
-                    class="btn-full">
-                  </p-button>
-                </div>
-              </div>
-            </ng-template>
-          </p-step-panel>
-
-          <!-- PASO 2 -->
-          <p-step-panel [value]="2">
-            <ng-template #content let-activateCallback="activateCallback">
-              <div class="step-content">
-                <div class="field-group">
-                  <label class="field-label">Contraseña</label>
-                  <p-password formControlName="password" [feedback]="false" placeholder="••••••••" toggleMask="true"></p-password>
-                  <small *ngIf="f['password'].hasError('onlySpaces') && f['password'].touched" class="p-error error-text">La contraseña no puede contener solo espacios.</small>
-                  <small *ngIf="f['password'].hasError('required') && f['password'].touched" class="p-error error-text">La contraseña es requerida</small>
-                </div>
-
-                <div class="forgot-section mt-3">
-                  <a href="#" class="forgot-link">
-                    <i class="pi pi-question-circle mr-1"></i>¿Olvidaste tu contraseña?
-                  </a>
-                </div>
-
-                <div class="button-group mt-5">
-                  <p-button
-                    label="Atrás"
-                    severity="secondary"
-                    icon="pi pi-arrow-left"
-                    (onClick)="activateCallback(1)"
-                    class="btn-secondary">
-                  </p-button>
-
-                  <p-button
-                    label="Ingresar"
-                    icon="pi pi-sign-in"
-                    iconPos="right"
-                    (onClick)="login()"
-                    [disabled]="loginForm.invalid"
-                    class="btn-full">
-                  </p-button>
-                </div>
-              </div>
-            </ng-template>
-          </p-step-panel>
-
-        </p-step-panels>
-      </p-stepper>
+      <button pButton type="submit" label="Ingresar" icon="pi pi-sign-in" class="w-full"></button>
     </form>
+
+    <div class="mt-4 text-sm text-600">
+      <strong>Demo:</strong>
+      <div>superadmin@local / Admin@12345</div>
+      <div>2023371057@uteq.edu.mx / Admin@12345</div>
+    </div>
   </div>
 </div>

@@ -4,17 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-
-interface UserProfile {
-  nombreCompleto: string;
-  usuario: string;
-  email: string;
-  telefono: string;
-  fechaNacimiento: string;
-  direccion: string;
-}
+import { MessageService } from 'primeng/api';
+import { AuthService } from '../../services/auth.service';
+import { Permissions } from '../../services/permissions';
+import { AppUser, Ticket } from '../../models/permissions.model';
 
 @Component({
   selector: 'app-profile',
@@ -22,68 +16,66 @@ interface UserProfile {
   imports: [CommonModule, FormsModule, CardModule, ButtonModule, InputTextModule, ToastModule],
   templateUrl: './profile.html',
   styleUrls: ['./profile.css'],
-  providers: [MessageService]
+  providers: [MessageService],
 })
 export class Profile implements OnInit {
-  profileData: UserProfile = {
-    nombreCompleto: 'Juan Pérez',
-    usuario: 'juanperez',
-    email: 'juan@example.com',
-    telefono: '1234567890',
-    fechaNacimiento: '1990-05-15',
-    direccion: 'Calle Principal 123, Apto 4B'
-  };
-
+  profileData: AppUser | null = null;
+  editData: AppUser | null = null;
   isEditMode = false;
-  editData: UserProfile = { ...this.profileData };
+  assignedTickets: Ticket[] = [];
 
-  constructor(private messageService: MessageService) {}
+  constructor(
+    private authService: AuthService,
+    private dataService: Permissions,
+    private messageService: MessageService,
+  ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadUserProfile();
   }
 
-  loadUserProfile() {
-    // In a real app, this would fetch from AuthService or UserService
-    // For now, using mock data from registration
-    this.profileData = {
-      nombreCompleto: localStorage.getItem('nombreCompleto') || 'Juan Pérez',
-      usuario: localStorage.getItem('usuario') || 'juanperez',
-      email: localStorage.getItem('email') || 'juan@example.com',
-      telefono: localStorage.getItem('telefono') || '1234567890',
-      fechaNacimiento: localStorage.getItem('fechaNacimiento') || '1990-05-15',
-      direccion: localStorage.getItem('direccion') || 'Calle Principal 123'
-    };
-    this.editData = { ...this.profileData };
+  loadUserProfile(): void {
+    const user = this.authService.getCurrentUser();
+    const groupId = this.authService.getSession()?.selectedGroupId;
+    if (!user || !groupId) {
+      return;
+    }
+
+    this.profileData = { ...user };
+    this.editData = { ...user };
+    this.assignedTickets = this.dataService
+      .getTicketsByGroup(groupId)
+      .filter(ticket => ticket.assigneeId === user.id || ticket.createdById === user.id);
   }
 
-  toggleEditMode() {
+  toggleEditMode(): void {
     this.isEditMode = !this.isEditMode;
-    if (!this.isEditMode) {
+    if (!this.isEditMode && this.profileData) {
       this.editData = { ...this.profileData };
     }
   }
 
-  saveProfile() {
-    this.profileData = { ...this.editData };
-    // Save to localStorage for now
-    localStorage.setItem('nombreCompleto', this.profileData.nombreCompleto);
-    localStorage.setItem('usuario', this.profileData.usuario);
-    localStorage.setItem('email', this.profileData.email);
-    localStorage.setItem('telefono', this.profileData.telefono);
-    localStorage.setItem('fechaNacimiento', this.profileData.fechaNacimiento);
-    localStorage.setItem('direccion', this.profileData.direccion);
+  saveProfile(): void {
+    if (!this.editData) {
+      return;
+    }
 
+    const users = this.authService.getUsers();
+    const index = users.findIndex(user => user.id === this.editData?.id);
+    if (index < 0) {
+      return;
+    }
+
+    users[index] = { ...this.editData };
+    this.authService.saveUsers(users);
+
+    this.profileData = { ...this.editData };
     this.isEditMode = false;
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Éxito',
-      detail: 'Perfil actualizado correctamente'
-    });
+
+    this.messageService.add({ severity: 'success', summary: 'Perfil actualizado', detail: 'Cambios guardados.' });
   }
 
-  cancel() {
-    this.editData = { ...this.profileData };
-    this.isEditMode = false;
+  countByStatus(status: Ticket['status']): number {
+    return this.assignedTickets.filter(ticket => ticket.status === status).length;
   }
 }

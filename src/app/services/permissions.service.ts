@@ -1,55 +1,95 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import {
-  PermissionKey,
-  ROLE_PERMISSIONS,
-  UserPermissions
-} from '../models/permissions.model';
+import { AuthService } from './auth.service';
+import { ALL_PERMISSIONS, PermissionKey } from '../models/permissions.model';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {
-  private permissionsSubject = new BehaviorSubject<Set<PermissionKey>>(new Set());
-  public permissions$ = this.permissionsSubject.asObservable();
+  private readonly permissionsSubject = new BehaviorSubject<Set<PermissionKey>>(new Set());
+  readonly permissions$ = this.permissionsSubject.asObservable();
+
+  constructor(private readonly authService: AuthService) {
+    // Inicializa inmediatamente para la sesión actual
+    this.syncFromSession();
+
+    // Sincroniza cuando la sesión cambia, y también intenta hidratar si es necesario
+    this.authService.session$.subscribe(() => {
+      // Usar setTimeout(0) para asegurar que syncFromSession se ejecuta después de que
+      // toda la propagación de RxJS haya terminado
+      setTimeout(() => this.syncFromSession(), 0);
+    });
+  }
 
   hasPermission(permission: PermissionKey): boolean {
     return this.permissionsSubject.value.has(permission);
   }
 
-  // Método para obtener un Observable de los permisos (usado por la directiva)
-  getPermissions(): Observable<Set<PermissionKey>> {
-    return this.permissions$;
+  hasAnyPermission(permissions: PermissionKey[]): boolean {
+    return permissions.some(permission => this.hasPermission(permission));
   }
 
-  hasAnyPermission(permissions: string[]): boolean {
-    return permissions.some(p => this.hasPermission(p as PermissionKey));
+  getPermissions(): Observable<Set<PermissionKey>> {
+    return this.permissions$;
   }
 
   clearPermissions(): void {
     this.permissionsSubject.next(new Set());
   }
 
-  loginAsAdmin(): void {
-    this.setPermissions('admin');
-  }
-  loginAsUser(): void {
-    this.setPermissions('user');
-  }
-  loginAsViewer(): void {
-    this.setPermissions('viewer');
-  }
-  loginAsEditor(): void {
-    this.setPermissions('editor');
+  setSessionPermissions(permissions: PermissionKey[]): void {
+    this.authService.updateSession({ permissions });
   }
 
-  setUserPermissions(user: UserPermissions): void {
-    const newPermissions = new Set<PermissionKey>(user.permissions);
-    this.permissionsSubject.next(newPermissions);
+  getCurrentPermissions(): PermissionKey[] {
+    return [...this.permissionsSubject.value.values()];
   }
 
-  private setPermissions(role: keyof typeof ROLE_PERMISSIONS): void {
-    console.log(`🔐 Cambio de rol a: ${role.toUpperCase()}`);
-    const newPermissions = new Set<PermissionKey>();
-    ROLE_PERMISSIONS[role].forEach(p => newPermissions.add(p));
-    this.permissionsSubject.next(newPermissions);
+  isSuperAdmin(): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    return currentUser?.isSuperAdmin ?? false;
+  }
+
+  private syncFromSession(): void {
+    const session = this.authService.getSession();
+    const currentUser = this.authService.getCurrentUser();
+
+    if (!currentUser) {
+      this.permissionsSubject.next(new Set());
+      return;
+    }
+
+    const fallbackGroupId = currentUser.groupIds[0] ?? null;
+
+    if (session && !session.selectedGroupId && fallbackGroupId) {
+      this.authService.updateSession({ selectedGroupId: fallbackGroupId });
+    }
+
+    if (currentUser.isSuperAdmin) {
+      this.permissionsSubject.next(new Set(ALL_PERMISSIONS));
+      return;
+    }
+
+    let selectedGroupId = session?.selectedGroupId ?? fallbackGroupId;
+
+    // Si no hay selectedGroupId en sesión, intenta usar el primer grupo del usuario
+    if (!selectedGroupId && currentUser.groupIds.length > 0) {
+      selectedGroupId = currentUser.groupIds[0];
+      // Hidrata la sesión si le falta el selectedGroupId
+      if (session && !session.selectedGroupId) {
+        this.authService.updateSession({ selectedGroupId });
+      }
+    }
+
+    // Obtén los permisos para el grupo seleccionado
+    const groupPermissions = selectedGroupId
+      ? (currentUser.permissionsByGroup[selectedGroupId] ?? [])
+      : [];
+
+    // Asegúrate de que la sesión tenga los permisos reflejados
+    if (session && session.permissions?.length === 0 && groupPermissions.length > 0) {
+      this.authService.updateSession({ permissions: groupPermissions });
+    }
+
+    this.permissionsSubject.next(new Set(groupPermissions));
   }
 }

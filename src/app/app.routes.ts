@@ -7,13 +7,10 @@ import { MainLayout } from './layout/main-layout/main-layout';
 import { AuthGuard } from './guards/auth.guard';
 import { permissionsGuard } from './guards/permissions-guard';
 import { Groups } from './pages/groups/groups';
+import { UserPage } from './pages/user/user';
+import { Tickets } from './pages/tickets/tickets';
 import { Profile } from './pages/profile/profile';
 import { PERMISSIONS_CATALOG } from './models/permissions.model';
-import { User } from './pages/user/user';
-import { Tickets } from './pages/tickets/tickets';
-
-
-
 
 export const routes: Routes = [
   { path: '', component: Landing },
@@ -26,20 +23,16 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: 'home', component: Home },
-      {
-        path: 'groups',
-        component: Groups,
-        canActivate: [permissionsGuard(PERMISSIONS_CATALOG.GROUPS_VIEW)],
-      },
+      { path: 'groups', component: Groups },
       {
         path: 'users',
-        component: User,
-        canActivate: [permissionsGuard(PERMISSIONS_CATALOG.USERS_VIEW)],
+        component: UserPage,
+        canActivate: [permissionsGuard(PERMISSIONS_CATALOG.USER_VIEW)],
       },
       {
         path: 'tickets',
         component: Tickets,
-        canActivate: [permissionsGuard(PERMISSIONS_CATALOG.TICKETS_VIEW)],
+        canActivate: [permissionsGuard(PERMISSIONS_CATALOG.TICKET_READ)],
       },
       { path: 'profile', component: Profile },
     ],

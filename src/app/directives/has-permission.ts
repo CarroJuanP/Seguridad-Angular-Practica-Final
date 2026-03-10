@@ -9,25 +9,32 @@ import { PermissionKey } from '../models/permissions.model';
 })
 export class IfHasPermissionDirective implements OnInit, OnDestroy {
   private requiredPermission: PermissionKey | null = null;
-  private destroy$ = new Subject<void>();
+  private readonly destroy$ = new Subject<void>();
   private hasView = false;
 
   constructor(
-    private templateRef: TemplateRef<any>,
-    private viewContainer: ViewContainerRef,
-    private permissionsService: PermissionsService
+    private readonly templateRef: TemplateRef<unknown>,
+    private readonly viewContainer: ViewContainerRef,
+    private readonly permissionsService: PermissionsService,
   ) {}
 
-  @Input('ifHasPermission')
+  @Input()
   set ifHasPermission(permission: PermissionKey) {
     this.requiredPermission = permission;
     this.updateView();
   }
 
   ngOnInit() {
-    this.permissionsService.getPermissions().pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => this.updateView());
+    // Primero, intenta mostrar basado en el estado actual
+    this.updateView();
+
+    // Luego, escucha cambios futuros en los permisos
+    this.permissionsService.getPermissions()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        // Usa setTimeout para permitir que Angular termine su ciclo de detección
+        setTimeout(() => this.updateView(), 0);
+      });
   }
 
   ngOnDestroy() {
@@ -36,7 +43,10 @@ export class IfHasPermissionDirective implements OnInit, OnDestroy {
   }
 
   private updateView() {
-    if (this.requiredPermission && this.permissionsService.hasPermission(this.requiredPermission)) {
+    const hasPermission = this.requiredPermission &&
+                         this.permissionsService.hasPermission(this.requiredPermission);
+
+    if (hasPermission) {
       if (!this.hasView) {
         this.viewContainer.createEmbeddedView(this.templateRef);
         this.hasView = true;

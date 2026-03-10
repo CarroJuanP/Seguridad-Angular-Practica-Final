@@ -12,7 +12,7 @@ import { IfHasPermissionDirective } from '../../directives/has-permission';
   standalone: true,
   imports: [ButtonModule, RouterModule, CommonModule, IfHasPermissionDirective],
   templateUrl: './sidebar.html',
-  styleUrls: ['./sidebar.css']
+  styleUrls: ['./sidebar.css'],
 })
 export class Sidebar {
   permissions = PERMISSIONS_CATALOG;
@@ -20,16 +20,20 @@ export class Sidebar {
   constructor(
     private auth: AuthService,
     private router: Router,
-    private permissionsService: PermissionsService
+    private permissionsService: PermissionsService,
   ) {}
 
-  logout() {
+  get currentUserName(): string {
+    return this.auth.getSession()?.name ?? 'Sin sesion';
+  }
+
+  get currentUserEmail(): string {
+    return this.auth.getSession()?.email ?? '-';
+  }
+
+  logout(): void {
     this.auth.logout();
     this.permissionsService.clearPermissions();
     this.router.navigate(['/']);
   }
-  loginAsAdmin() { this.permissionsService.loginAsAdmin(); }
-  loginAsUser() { this.permissionsService.loginAsUser(); }
-  loginAsViewer() { this.permissionsService.loginAsViewer(); }
-  loginAsEditor() { this.permissionsService.loginAsEditor(); }
 }

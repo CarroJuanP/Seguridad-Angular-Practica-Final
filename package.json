@@ -1,6 +1,7 @@
 {
   "name": "practica2",
   "version": "0.0.0",
+  "author": "emmarher",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

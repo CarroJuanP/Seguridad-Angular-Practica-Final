@@ -1,47 +1,79 @@
-<div class="card fade-in">
-  <h2 class="mb-3">Gestión de Usuarios</h2>
-  <p class="mb-4">Administración de usuarios del sistema. Los botones se muestran según tus permisos.</p>
-
-  <div class="flex gap-2 mb-3">
-    <!-- Solo visible si tiene permiso de AGREGAR -->
-    <button
-      *ifHasPermission="permissions.USERS_ADD"
-      pButton
-      label="Nuevo Usuario"
-      icon="pi pi-plus"
-      class="p-button-success"
-      (click)="addUser()"
-    ></button>
+<div class="user-page">
+  <div class="head-row">
+    <h2>Gestion de usuarios</h2>
+    <button *ifHasPermission="permissions.USER_ADD" pButton label="Nuevo usuario" icon="pi pi-plus" (click)="openNew()"></button>
   </div>
 
-  <p-table [value]="users" [tableStyle]="{ 'min-width': '50rem' }">
+  <p-table [value]="users" [paginator]="true" [rows]="8" responsiveLayout="scroll">
     <ng-template pTemplate="header">
-        <tr>
-            <th>ID</th>
-            <th>Usuario</th>
-            <th>Email</th>
-            <th>Rol</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-        </tr>
+      <tr>
+        <th>Nombre</th>
+        <th>Usuario</th>
+        <th>Email</th>
+        <th>Tipo</th>
+        <th>Acciones</th>
+      </tr>
     </ng-template>
     <ng-template pTemplate="body" let-user>
-        <tr>
-            <td>{{ user.id }}</td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.role }}</td>
-            <td>
-                <p-tag [value]="user.status" [severity]="user.status === 'Activo' ? 'success' : 'danger'"></p-tag>
-            </td>
-            <td>
-                <div class="flex gap-2">
-                    <!-- Botones de acción protegidos por permisos -->
-                    <button *ifHasPermission="permissions.USERS_EDIT" pButton icon="pi pi-pencil" class="p-button-rounded p-button-warning p-button-text" aria-label="Editar"></button>
-                    <button *ifHasPermission="permissions.USERS_DELETE" pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" aria-label="Eliminar"></button>
-                </div>
-            </td>
-        </tr>
+      <tr>
+        <td>{{ user.name }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>
+          <p-tag [value]="user.isSuperAdmin ? 'superAdmin' : 'normal'" [severity]="user.isSuperAdmin ? 'danger' : 'info'"></p-tag>
+        </td>
+        <td>
+          <button *ifHasPermission="permissions.USER_EDIT" pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" (click)="editUser(user)"></button>
+          <button *ifHasPermission="permissions.USER_DELETE" pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" (click)="deleteUser(user)"></button>
+        </td>
+      </tr>
     </ng-template>
   </p-table>
 </div>
+
+<p-dialog [(visible)]="dialogVisible" [modal]="true" [style]="{ width: '700px' }" [header]="isNew ? 'Crear usuario' : 'Editar usuario'">
+  <div class="form-grid">
+    <label>Nombre</label>
+    <input pInputText [(ngModel)]="formData.name" />
+
+    <label>Usuario</label>
+    <input pInputText [(ngModel)]="formData.username" />
+
+    <label>Email</label>
+    <input pInputText [(ngModel)]="formData.email" />
+
+    <label>Password</label>
+    <input pInputText [(ngModel)]="formData.password" />
+
+    <label>Telefono</label>
+    <input pInputText [(ngModel)]="formData.phone" />
+
+    <label>Direccion</label>
+    <input pInputText [(ngModel)]="formData.address" />
+
+    <label>Tipo usuario</label>
+    <p-select
+      [options]="[{ label: 'normal', value: false }, { label: 'superAdmin', value: true }]"
+      optionLabel="label"
+      optionValue="value"
+      [(ngModel)]="formData.isSuperAdmin"
+    ></p-select>
+
+    <label>Permisos para la sesion actual</label>
+    <div class="permissions-grid">
+      <button
+        type="button"
+        pButton
+        *ngFor="let permission of allPermissions"
+        [label]="permission"
+        [severity]="hasPermissionChecked(permission) ? 'primary' : 'secondary'"
+        (click)="togglePermission(permission)"
+      ></button>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancelar" class="p-button-text" (click)="dialogVisible = false"></button>
+    <button pButton label="Guardar" (click)="saveUser()"></button>
+  </ng-template>
+</p-dialog>

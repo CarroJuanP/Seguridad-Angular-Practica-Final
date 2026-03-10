@@ -1,23 +1,39 @@
-<div class="home-container">
-  <p-card header="Bienvenido Usuario" styleClass="p-shadow-3">
-    <p>Gracias por acceder a la aplicación. Puedes navegar por las diferentes secciones usando el menú lateral.</p>
-    <p>Si necesitas ayuda, no dudes en contactar al soporte técnico.</p>
-    <p>¡Disfruta tu experiencia!</p>
+<div class="home-container" *ngIf="selectedGroup as group">
+  <p-card styleClass="hero-card">
+    <div class="hero-content">
+      <div>
+        <h2 class="m-0">Dashboard: {{ group.name }}</h2>
+        <p class="mt-2 mb-0">{{ group.description }}</p>
+      </div>
+    </div>
   </p-card>
 
-  <!-- Dashboard cards (Total & Advance) -->
-  <div class="dashboard-row">
-    <p-card header="Total" styleClass="small-card">
-      <div class="stat-wrap">
-        <div class="stat-number">{{ total }}</div>
-        <div class="stat-label">N</div>
-      </div>
-    </p-card>
-
-    <p-card header="Advance" styleClass="small-card">
-      <div class="advance-wrap">
-        <div class="advance-placeholder">--</div>
-      </div>
-    </p-card>
+  <div class="stats-grid">
+    <p-card><h3>Total</h3><div class="stat">{{ totalTickets }}</div></p-card>
+    <p-card><h3>Pendiente</h3><div class="stat">{{ byStatus('Pendiente') }}</div></p-card>
+    <p-card><h3>En progreso</h3><div class="stat">{{ byStatus('En progreso') }}</div></p-card>
+    <p-card><h3>Hecho</h3><div class="stat">{{ byStatus('Hecho') }}</div></p-card>
+    <p-card><h3>Bloqueado</h3><div class="stat">{{ byStatus('Bloqueado') }}</div></p-card>
   </div>
+
+  <p-card>
+    <div class="card-head">
+      <h3 class="m-0">Tickets recientes / asignados</h3>
+      <button pButton label="Ver Kanban" icon="pi pi-table" (click)="openKanban()"></button>
+    </div>
+
+    <div class="ticket-mini" *ngFor="let ticket of recentTickets">
+      <div>
+        <div class="ticket-title">{{ ticket.id }} - {{ ticket.title }}</div>
+        <small>Asignado a: {{ ticket.assigneeName || 'Sin asignar' }}</small>
+      </div>
+      <p-tag [value]="ticket.status"></p-tag>
+    </div>
+
+    <div *ngIf="!recentTickets.length" class="text-500">No hay tickets en este grupo.</div>
+
+    <div class="mt-3" *ifHasPermission="permissions.TICKET_CREATE">
+      <button pButton label="Crear ticket" icon="pi pi-plus" (click)="openKanban()"></button>
+    </div>
+  </p-card>
 </div>

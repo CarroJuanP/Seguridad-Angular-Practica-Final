@@ -4,8 +4,8 @@ import { CanActivateFn } from '@angular/router';
 import { permissionsGuard } from './permissions-guard';
 
 describe('permissionsGuard', () => {
-  const executeGuard: CanActivateFn = (...guardParameters) => 
-      TestBed.runInInjectionContext(() => permissionsGuard(...guardParameters));
+  const executeGuard: CanActivateFn = (route, state) =>
+      TestBed.runInInjectionContext(() => permissionsGuard('')(route, state));
 
   beforeEach(() => {
     TestBed.configureTestingModule({});

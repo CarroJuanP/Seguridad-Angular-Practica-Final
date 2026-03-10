@@ -24,30 +24,30 @@
             <ng-template #content let-activateCallback="activateCallback">
               <div class="step-content">
                 <div class="field-group">
-                  <label class="field-label">Nombre Completo</label>
-                  <input pInputText formControlName="nombreCompleto" class="field-input" placeholder="Juan Pérez"/>
+                  <label class="field-label" for="registerFullName">Nombre Completo</label>
+                  <input id="registerFullName" pInputText formControlName="nombreCompleto" class="field-input" placeholder="Juan Perez"/>
                   <small *ngIf="f['nombreCompleto'].hasError('onlySpaces') && f['nombreCompleto'].touched" class="p-error error-text">El campo no puede contener solo espacios.</small>
                   <small *ngIf="f['nombreCompleto'].hasError('required') && f['nombreCompleto'].touched" class="p-error error-text">El nombre es obligatorio.</small>
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Fecha de Nacimiento</label>
-                  <p-datepicker formControlName="fechaNacimiento" class="field-input" appendTo="body" [showIcon]="true"></p-datepicker>
+                  <label class="field-label" for="registerBirthDate">Fecha de Nacimiento</label>
+                  <p-datepicker inputId="registerBirthDate" formControlName="fechaNacimiento" class="field-input" appendTo="body" [showIcon]="true"></p-datepicker>
                   <small *ngIf="f['fechaNacimiento'].invalid && f['fechaNacimiento'].touched" class="p-error error-text">
                     La fecha es obligatoria.
                   </small>
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Dirección</label>
-                  <input pInputText formControlName="direccion" class="field-input" placeholder="Calle Principal 123"/>
+                  <label class="field-label" for="registerAddress">Direccion</label>
+                  <input id="registerAddress" pInputText formControlName="direccion" class="field-input" placeholder="Calle Principal 123"/>
                   <small *ngIf="f['direccion'].hasError('onlySpaces') && f['direccion'].touched" class="p-error error-text">El campo no puede contener solo espacios.</small>
                   <small *ngIf="f['direccion'].hasError('required') && f['direccion'].touched" class="p-error error-text">La dirección es obligatoria.</small>
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Teléfono</label>
-                  <input pInputText formControlName="telefono" class="field-input" placeholder="3001234567" maxlength="10"/>
+                  <label class="field-label" for="registerPhone">Telefono</label>
+                  <input id="registerPhone" pInputText formControlName="telefono" class="field-input" placeholder="3001234567" maxlength="10"/>
                   <small *ngIf="f['telefono'].hasError('required') && f['telefono'].touched" class="p-error error-text">El teléfono es obligatorio.</small>
                   <small *ngIf="f['telefono'].hasError('pattern') && f['telefono'].touched" class="p-error error-text">El teléfono debe contener exactamente 10 dígitos numéricos.</small>
                 </div>
@@ -76,8 +76,8 @@
             <ng-template #content let-activateCallback="activateCallback">
               <div class="step-content">
                 <div class="field-group">
-                  <label class="field-label">Usuario</label>
-                  <input pInputText formControlName="usuario" class="field-input" placeholder="mi_usuario"/>
+                  <label class="field-label" for="registerUsername">Usuario</label>
+                  <input id="registerUsername" pInputText formControlName="usuario" class="field-input" placeholder="mi_usuario"/>
                   <small *ngIf="f['usuario'].hasError('noSpaces') && f['usuario'].touched" class="p-error error-text">
                     No se permiten espacios en el usuario.
                   </small>
@@ -87,8 +87,8 @@
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Correo Electrónico</label>
-                  <input pInputText formControlName="email" type="email" class="field-input" placeholder="tu@correo.com"/>
+                  <label class="field-label" for="registerEmail">Correo Electronico</label>
+                  <input id="registerEmail" pInputText formControlName="email" type="email" class="field-input" placeholder="tu@correo.com"/>
                   <small *ngIf="f['email'].hasError('noSpaces') && f['email'].touched" class="p-error error-text">
                     No se permiten espacios en el correo.
                   </small>
@@ -98,8 +98,8 @@
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Contraseña</label>
-                  <p-password formControlName="password" toggleMask="true" class="field-input" placeholder="••••••••"></p-password>
+                  <label class="field-label" for="registerPassword">Contrasena</label>
+                  <p-password inputId="registerPassword" formControlName="password" toggleMask="true" class="field-input" placeholder="********"></p-password>
                   <small *ngIf="f['password'].hasError('noSpaces') && f['password'].touched" class="p-error error-text">
                     No se permiten espacios en la contraseña.
                   </small>
@@ -109,8 +109,8 @@
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label">Confirmar Contraseña</label>
-                  <p-password formControlName="confirmPassword" toggleMask="true" class="field-input" placeholder="••••••••"></p-password>
+                  <label class="field-label" for="registerConfirmPassword">Confirmar Contrasena</label>
+                  <p-password inputId="registerConfirmPassword" formControlName="confirmPassword" toggleMask="true" class="field-input" placeholder="********"></p-password>
                   <small *ngIf="f['confirmPassword'].hasError('noSpaces') && f['confirmPassword'].touched" class="p-error error-text">
                     No se permiten espacios en la confirmación.
                   </small>
