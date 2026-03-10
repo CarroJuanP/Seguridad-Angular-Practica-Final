@@ -1,0 +1,41 @@
+<div class="card fade-in">
+  <h2 class="mb-3">Tickets de Soporte</h2>
+  <p class="mb-4">Bandeja de entrada de incidencias.</p>
+
+  <div class="flex gap-2 mb-3">
+    <button
+      *ifHasPermission="permissions.TICKETS_ADD"
+      pButton
+      label="Crear Ticket"
+      icon="pi pi-plus"
+    ></button>
+  </div>
+
+  <p-table [value]="tickets" [tableStyle]="{ 'min-width': '50rem' }">
+    <ng-template pTemplate="header">
+        <tr>
+            <th>ID</th>
+            <th>Asunto</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Asignado a</th>
+            <th>Acciones</th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-ticket>
+        <tr>
+            <td>{{ ticket.id }}</td>
+            <td>{{ ticket.subject }}</td>
+            <td><p-tag [value]="ticket.priority" [severity]="getSeverity(ticket.priority)"></p-tag></td>
+            <td>{{ ticket.status }}</td>
+            <td>{{ ticket.assignedTo }}</td>
+            <td>
+                <div class="flex gap-2">
+                    <button *ifHasPermission="permissions.TICKETS_EDIT" pButton icon="pi pi-check" class="p-button-rounded p-button-success p-button-text" pTooltip="Resolver"></button>
+                    <button *ifHasPermission="permissions.TICKETS_DELETE" pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" pTooltip="Eliminar"></button>
+                </div>
+            </td>
+        </tr>
+    </ng-template>
+  </p-table>
+</div>

@@ -1,0 +1,47 @@
+<div class="card fade-in">
+  <h2 class="mb-3">Gestión de Usuarios</h2>
+  <p class="mb-4">Administración de usuarios del sistema. Los botones se muestran según tus permisos.</p>
+
+  <div class="flex gap-2 mb-3">
+    <!-- Solo visible si tiene permiso de AGREGAR -->
+    <button
+      *ifHasPermission="permissions.USERS_ADD"
+      pButton
+      label="Nuevo Usuario"
+      icon="pi pi-plus"
+      class="p-button-success"
+      (click)="addUser()"
+    ></button>
+  </div>
+
+  <p-table [value]="users" [tableStyle]="{ 'min-width': '50rem' }">
+    <ng-template pTemplate="header">
+        <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-user>
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.role }}</td>
+            <td>
+                <p-tag [value]="user.status" [severity]="user.status === 'Activo' ? 'success' : 'danger'"></p-tag>
+            </td>
+            <td>
+                <div class="flex gap-2">
+                    <!-- Botones de acción protegidos por permisos -->
+                    <button *ifHasPermission="permissions.USERS_EDIT" pButton icon="pi pi-pencil" class="p-button-rounded p-button-warning p-button-text" aria-label="Editar"></button>
+                    <button *ifHasPermission="permissions.USERS_DELETE" pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" aria-label="Eliminar"></button>
+                </div>
+            </td>
+        </tr>
+    </ng-template>
+  </p-table>
+</div>

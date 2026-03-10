@@ -4,6 +4,8 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, A
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../services/auth.service';
+import { PermissionsService } from '../../../services/permissions.service';
+import { UserPermissions, ROLE_PERMISSIONS } from '../../../models/permissions.model';
 import { ToastModule } from 'primeng/toast';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
@@ -46,7 +48,8 @@ export class Login {
     private fb: FormBuilder,
     private messageService: MessageService,
     private router: Router,
-    private auth: AuthService
+    private auth: AuthService,
+    private permissionsService: PermissionsService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email, this.notOnlySpacesValidator]],
@@ -74,6 +77,15 @@ export class Login {
         detail: 'Bienvenida al sistema'
       });
 
+      // simular decodificación de JWT y cargar permisos
+      const user: UserPermissions = {
+        userId: '1',
+        username: 'Usuario Demo',
+        email,
+        role: 'user',
+        permissions: ROLE_PERMISSIONS['user']
+      };
+      this.permissionsService.setUserPermissions(user);
       this.auth.login();
       // redirigir al home después de mostrar el toast
       setTimeout(() => this.router.navigate(['/home']), 800);

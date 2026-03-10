@@ -10,6 +10,8 @@ export class AuthService {
 
   logout(): void {
     this._logged = false;
+    // clear tokens, etc.
+    console.log('logged out');
   }
 
   get isAuthenticated(): boolean {
