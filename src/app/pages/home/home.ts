@@ -7,7 +7,7 @@ import { TagModule } from 'primeng/tag';
 import { IfHasPermissionDirective } from '../../directives/has-permission';
 import { AuthService } from '../../services/auth.service';
 import { Permissions } from '../../services/permissions';
-import { AppGroup, PERMISSIONS_CATALOG, Ticket } from '../../models/permissions.model';
+import { AppGroup, Ticket } from '../../models/permissions.model';
 
 @Component({
   selector: 'app-home',
@@ -17,7 +17,6 @@ import { AppGroup, PERMISSIONS_CATALOG, Ticket } from '../../models/permissions.
   styleUrls: ['./home.css'],
 })
 export class Home implements OnInit {
-  permissions = PERMISSIONS_CATALOG;
   selectedGroup: AppGroup | null = null;
   tickets: Ticket[] = [];
   recentTickets: Ticket[] = [];
@@ -28,23 +27,40 @@ export class Home implements OnInit {
     private readonly router: Router,
   ) {}
 
-  ngOnInit(): void {
-    const session = this.authService.getSession();
-    const currentUser = this.authService.getCurrentUser();
-    const selectedGroupId = session?.selectedGroupId ?? currentUser?.groupIds[0] ?? null;
+  get userName(): string {
+    return this.authService.getCurrentUser()?.name ?? 'Usuario';
+  }
 
-    if (!selectedGroupId) {
-      this.router.navigate(['/groups']);
+  get isSuperAdmin(): boolean {
+    return this.authService.getCurrentUser()?.isSuperAdmin ?? false;
+  }
+
+  get canSeeGroups(): boolean {
+    return this.hasModuleAccess('group:');
+  }
+
+  ngOnInit(): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      this.router.navigate(['/login']);
       return;
     }
 
-    if (selectedGroupId !== session?.selectedGroupId) {
-      this.authService.updateSession({ selectedGroupId });
-    }
+    const session = this.authService.getSession();
+    const selectedGroupId = session?.selectedGroupId;
+    const hasEnteredGroup = session?.hasEnteredGroup;
 
-    this.selectedGroup = this.dataService.getGroupById(selectedGroupId);
-    this.tickets = this.dataService.getTicketsByGroup(selectedGroupId);
-    this.recentTickets = [...this.tickets].slice(0, 4);
+    // Solo cargar dashboard si el usuario formalmente ha entrado a un grupo
+    if (selectedGroupId && hasEnteredGroup) {
+      this.dataService.getGroupById$(selectedGroupId).subscribe(group => {
+        this.selectedGroup = group;
+      });
+      this.dataService.getTicketsByGroup$(selectedGroupId).subscribe(tickets => {
+        this.tickets = tickets;
+        this.recentTickets = [...tickets].slice(0, 4);
+      });
+    }
+    // Si no, mostrar solo bienvenida
   }
 
   get totalTickets(): number {
@@ -57,5 +73,22 @@ export class Home implements OnInit {
 
   openKanban(): void {
     this.router.navigate(['/tickets']);
+  }
+
+  onGoToGroups(): void {
+    this.router.navigate(['/groups']);
+  }
+
+  private hasModuleAccess(prefix: 'group:' | 'user:' | 'ticket:'): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser?.isSuperAdmin) return true;
+
+    const userPermissions = currentUser
+      ? Object.values(currentUser.permissionsByGroup).flat()
+      : [];
+    const sessionPermissions = this.authService.getSession()?.permissions ?? [];
+    const allPermissions = [...new Set([...userPermissions, ...sessionPermissions])];
+
+    return allPermissions.some(permission => permission.startsWith(prefix));
   }
 }

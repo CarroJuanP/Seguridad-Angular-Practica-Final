@@ -40,3 +40,119 @@ p-card,
 .p-button {
   border-radius: 10px;
 }
+
+/* Register page polished, high-contrast theme */
+app-register .register-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+app-register .register-card {
+  width: min(760px, 100%);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.98)) !important;
+  border: 1px solid #bfdbfe;
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.35);
+  padding: 2rem 2.25rem;
+  color: #0f172a !important;
+}
+
+app-register .register-card .card-header {
+  border-bottom: 1px solid #bfdbfe;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+}
+
+app-register .register-card h1,
+app-register .register-card h2,
+app-register .register-card h3,
+app-register .register-card p,
+app-register .register-card label,
+app-register .register-card span,
+app-register .register-card small,
+app-register .register-card .field-label,
+app-register .register-card .header-subtitle,
+app-register .register-card .p-step-title,
+app-register .register-card .p-step-number {
+  color: #0f172a !important;
+}
+
+app-register .register-card .header-subtitle {
+  color: #334155 !important;
+}
+
+app-register .register-card .p-inputtext,
+app-register .register-card input,
+app-register .register-card textarea,
+app-register .register-card .p-password input,
+app-register .register-card .p-datepicker input {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #93c5fd !important;
+}
+
+app-register .register-card .p-inputtext::placeholder,
+app-register .register-card input::placeholder {
+  color: #64748b !important;
+}
+
+app-register .register-card .p-button.p-button-primary {
+  background: linear-gradient(90deg, #0ea5e9, #0284c7) !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+app-register .register-card .p-button.p-button-secondary {
+  background: #e2e8f0 !important;
+  border: 1px solid #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+app-register .register-card .p-button.p-button-secondary:hover {
+  background: #cbd5e1 !important;
+  border-color: #64748b !important;
+}
+
+app-register .register-card .p-button:disabled,
+app-register .register-card .p-button.p-disabled {
+  background: #94a3b8 !important;
+  border-color: #94a3b8 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Stepper lines and circles */
+app-register .register-card .p-stepper .p-step-header {
+  background: #ffffff !important;
+  border: 2px solid #93c5fd !important;
+}
+
+app-register .register-card .p-stepper .p-step-header.p-highlight {
+  background: #0ea5e9 !important;
+  border-color: #0284c7 !important;
+}
+
+app-register .register-card .p-stepper .p-step-header.p-highlight .p-step-number {
+  color: #ffffff !important;
+}
+
+app-register .register-card .p-stepper .p-stepper-separator,
+app-register .register-card .p-stepper .p-step-list .p-stepper-separator {
+  opacity: 1 !important;
+}
+
+app-register .register-card .p-stepper .p-stepper-separator::before,
+app-register .register-card .p-stepper .p-step-list .p-stepper-separator::before {
+  border-top: 3px solid #60a5fa !important;
+  opacity: 1 !important;
+}
+
+app-register .register-card .p-stepper .p-stepper-separator-line,
+app-register .register-card .p-stepper .p-step-list .p-stepper-separator-line {
+  background: #60a5fa !important;
+  height: 3px !important;
+  opacity: 1 !important;
+}

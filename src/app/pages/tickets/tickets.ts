@@ -13,12 +13,14 @@ import { TabsModule } from 'primeng/tabs';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
 import { IfHasPermissionDirective } from '../../directives/has-permission';
 import { AuthService } from '../../services/auth.service';
 import { Permissions } from '../../services/permissions';
 import {
+  AppGroup,
   AppUser,
-  PERMISSIONS_CATALOG,
+  PermissionKey,
   Ticket,
   TicketPriority,
   TicketStatus,
@@ -47,25 +49,20 @@ import {
   providers: [MessageService],
 })
 export class Tickets implements OnInit {
-  permissions = PERMISSIONS_CATALOG;
+  selectedGroup: AppGroup | null = null;
+  visibleGroupIds: string[] = [];
   statuses: TicketStatus[] = ['Pendiente', 'En progreso', 'Revision', 'Hecho', 'Bloqueado'];
   priorities: TicketPriority[] = ['Critica', 'Muy alta', 'Alta', 'Media', 'Baja', 'Muy baja', 'Bloqueado'];
-  priorityOptions: Array<{ label: string; value: TicketPriority }> = [
-    { label: 'Crítica', value: 'Critica' },
-    { label: 'Muy alta', value: 'Muy alta' },
-    { label: 'Alta', value: 'Alta' },
-    { label: 'Media', value: 'Media' },
-    { label: 'Baja', value: 'Baja' },
-    { label: 'Muy baja', value: 'Muy baja' },
-    { label: 'Bloqueado', value: 'Bloqueado' },
-  ];
+  priorityOptions: Array<{ label: string; value: TicketPriority }> = [];
 
   tickets: Ticket[] = [];
   filteredTickets: Ticket[] = [];
   usersInGroup: AppUser[] = [];
   selectedTicket: Ticket | null = null;
+  isLoading = false;
 
   viewMode: 'kanban' | 'table' = 'kanban';
+  showTableView = false; // true = table, false = kanban
   createDialog = false;
   detailDialog = false;
   quickFilter: 'all' | 'mine' | 'unassigned' | 'high' = 'all';
@@ -95,18 +92,80 @@ export class Tickets implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const groupId = this.authService.getSession()?.selectedGroupId;
-    if (!groupId) {
-      this.router.navigate(['/groups']);
-      return;
-    }
+    const session = this.authService.getSession();
+    this.authService.getUsers$().subscribe(usersFromDb => {
+      // Keep local cache aligned with DB so getCurrentUser/session-based checks use fresh permissions.
+      this.authService.saveUsers(usersFromDb);
 
-    this.usersInGroup = this.dataService.getUsersInGroup(groupId);
-    this.reloadTickets();
+      const freshCurrentUser =
+        usersFromDb.find(user => user.id === session?.userId) ??
+        usersFromDb.find(user => user.email.toLowerCase() === (session?.email ?? '').toLowerCase()) ??
+        this.authService.getCurrentUser();
+      const accessibleGroupIds = this.getAccessibleGroupIds(freshCurrentUser);
+      const hasTicketPermission = this.hasAnyTicketPermission(freshCurrentUser, session?.permissions ?? []);
+      const groupId = this.resolveAccessibleGroupId(
+        freshCurrentUser,
+        session?.selectedGroupId ?? null,
+      );
+
+      if (!freshCurrentUser || (!groupId && !hasTicketPermission)) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Sin acceso a tickets',
+          detail: 'No tienes un grupo con permiso para ver tickets.',
+        });
+        this.router.navigate(['/groups']);
+        return;
+      }
+
+      const selectedGroupId = groupId ?? session?.selectedGroupId ?? null;
+      const groupPermissions = selectedGroupId
+        ? (freshCurrentUser.permissionsByGroup[selectedGroupId] ?? [])
+        : (session?.permissions ?? []);
+      this.authService.updateSession({ selectedGroupId, permissions: groupPermissions });
+      this.visibleGroupIds = accessibleGroupIds;
+
+      const group$ = selectedGroupId ? this.dataService.getGroupById$(selectedGroupId) : of(null);
+      const users$ = selectedGroupId ? this.dataService.getUsersInGroup$(selectedGroupId) : of([] as AppUser[]);
+
+      forkJoin([
+        group$,
+        users$,
+        this.dataService.getTicketStatuses$(),
+        this.dataService.getTicketPriorities$(),
+      ]).subscribe(([group, users, statuses, priorities]) => {
+        this.selectedGroup = group;
+        this.usersInGroup = users;
+        if (statuses.length) {
+          this.statuses = statuses;
+        }
+        if (priorities.length) {
+          this.priorities = priorities;
+        }
+        this.priorityOptions = this.priorities.map(priority => ({
+          label: priority,
+          value: priority,
+        }));
+
+        if (!this.statuses.includes(this.ticketDraft.status)) {
+          this.ticketDraft.status = this.statuses[0] ?? 'Pendiente';
+        }
+        if (!this.priorities.includes(this.ticketDraft.priority)) {
+          this.ticketDraft.priority = this.priorities[0] ?? 'Media';
+        }
+
+        this.reloadTickets(this.visibleGroupIds);
+      });
+    });
   }
 
   ticketsByStatus(status: TicketStatus): Ticket[] {
     return this.filteredTickets.filter(ticket => ticket.status === status);
+  }
+
+  onViewModeChange(isTable: boolean): void {
+    this.showTableView = isTable;
+    this.viewMode = isTable ? 'table' : 'kanban';
   }
 
   applyQuickFilter(filter: 'all' | 'mine' | 'unassigned' | 'high'): void {
@@ -135,9 +194,9 @@ export class Tickets implements OnInit {
     this.ticketDraft = {
       title: '',
       description: '',
-      status: 'Pendiente',
+      status: this.statuses[0] ?? 'Pendiente',
       assigneeId: null,
-      priority: 'Media',
+      priority: this.priorities[0] ?? 'Media',
       dueDate: new Date().toISOString().slice(0, 10),
     };
   }
@@ -150,7 +209,8 @@ export class Tickets implements OnInit {
 
     const assignee = this.usersInGroup.find(user => user.id === this.ticketDraft.assigneeId) ?? null;
 
-    this.dataService.createTicket({
+    this.isLoading = true;
+    this.dataService.createTicket$({
       groupId,
       title: this.ticketDraft.title,
       description: this.ticketDraft.description,
@@ -158,22 +218,43 @@ export class Tickets implements OnInit {
       priority: this.ticketDraft.priority,
       dueDate: this.ticketDraft.dueDate,
       assigneeId: assignee?.id ?? null,
-      assigneeName: assignee?.name ?? null,
+    }).subscribe(created => {
+      this.isLoading = false;
+      if (!created) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'No se pudo crear',
+          detail: 'No se pudo crear el ticket con el catalogo actual de estado/prioridad.',
+        });
+        return;
+      }
+      this.createDialog = false;
+      this.reloadTickets();
+      this.messageService.add({ severity: 'success', summary: 'Ticket creado', detail: 'El ticket se agrego al tablero.' });
     });
-
-    this.createDialog = false;
-    this.reloadTickets();
-    this.messageService.add({ severity: 'success', summary: 'Ticket creado', detail: 'El ticket se agrego al tablero.' });
   }
 
   openDetail(ticket: Ticket): void {
-    this.selectedTicket = { ...ticket };
-    this.detailDialog = true;
-    this.commentDraft = '';
+    this.dataService.getTicketById$(ticket.id).subscribe(full => {
+      this.selectedTicket = full ? { ...full } : { ...ticket };
+      this.detailDialog = true;
+      this.commentDraft = '';
+    });
   }
 
   saveDetail(): void {
     if (!this.selectedTicket) {
+      return;
+    }
+
+    const canEdit = this.canEditFields(this.selectedTicket);
+    const canUpdateStatus = this.canChangeStatus(this.selectedTicket);
+    if (!canEdit && !canUpdateStatus) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Edicion no permitida',
+        detail: 'Solo puedes editar tickets creados y asignados a ti.',
+      });
       return;
     }
 
@@ -184,7 +265,8 @@ export class Tickets implements OnInit {
 
     const assignee = this.usersInGroup.find(user => user.id === this.selectedTicket?.assigneeId) ?? null;
 
-    this.dataService.updateTicket(
+    this.isLoading = true;
+    this.dataService.updateTicket$(
       this.selectedTicket.id,
       {
         title: this.selectedTicket.title,
@@ -192,15 +274,18 @@ export class Tickets implements OnInit {
         priority: this.selectedTicket.priority,
         dueDate: this.selectedTicket.dueDate,
         assigneeId: assignee?.id ?? null,
-        assigneeName: assignee?.name ?? null,
         status: this.selectedTicket.status,
       },
-      actor.name,
+      actor.id,
       'Detalle actualizado',
-    );
-
-    this.reloadTickets();
-    this.messageService.add({ severity: 'success', summary: 'Cambios guardados', detail: 'Ticket actualizado.' });
+    ).subscribe(ticket => {
+      this.isLoading = false;
+      if (ticket) {
+        this.selectedTicket = ticket;
+      }
+      this.reloadTickets();
+      this.messageService.add({ severity: 'success', summary: 'Cambios guardados', detail: 'Ticket actualizado.' });
+    });
   }
 
   addComment(): void {
@@ -209,10 +294,15 @@ export class Tickets implements OnInit {
       return;
     }
 
-    this.dataService.addTicketComment(this.selectedTicket.id, this.commentDraft.trim(), actor.id, actor.name);
+    this.isLoading = true;
+    this.dataService.addTicketComment$(this.selectedTicket.id, this.commentDraft.trim(), actor.id).subscribe(ticket => {
+      this.isLoading = false;
+      if (ticket) {
+        this.selectedTicket = ticket;
+      }
+      this.reloadTickets();
+    });
     this.commentDraft = '';
-    this.selectedTicket = this.dataService.getTicketById(this.selectedTicket.id);
-    this.reloadTickets();
   }
 
   onDragStart(event: DragEvent, ticket: Ticket): void {
@@ -231,13 +321,14 @@ export class Tickets implements OnInit {
       return;
     }
 
-    const targetTicket = this.dataService.getTicketById(ticketId);
-    if (!targetTicket || !this.canChangeStatus(targetTicket)) {
-      return;
-    }
-
-    this.dataService.updateTicket(ticketId, { status }, currentUser.name, `Estado movido a ${status}`);
-    this.reloadTickets();
+    this.dataService.getTicketById$(ticketId).subscribe(targetTicket => {
+      if (!targetTicket || !this.canChangeStatus(targetTicket)) {
+        return;
+      }
+      this.dataService
+        .updateTicket$(ticketId, { status }, currentUser.id, `Estado movido a ${status}`)
+        .subscribe(() => this.reloadTickets());
+    });
   }
 
   allowDrop(event: DragEvent): void {
@@ -245,8 +336,11 @@ export class Tickets implements OnInit {
   }
 
   deleteTicket(ticket: Ticket): void {
-    this.dataService.deleteTicket(ticket.id);
-    this.reloadTickets();
+    this.isLoading = true;
+    this.dataService.deleteTicket$(ticket.id).subscribe(() => {
+      this.isLoading = false;
+      this.reloadTickets(this.visibleGroupIds);
+    });
   }
 
   canEditFields(ticket: Ticket): boolean {
@@ -259,9 +353,7 @@ export class Tickets implements OnInit {
       return true;
     }
 
-    const isCreator = ticket.createdById === currentUser.id;
-    const hasEditPermission = this.hasPermission(PERMISSIONS_CATALOG.TICKET_UPDATE);
-    return isCreator && hasEditPermission;
+    return this.hasPermission('ticket:edit') || this.hasPermission('ticket:manage');
   }
 
   canChangeStatus(ticket: Ticket): boolean {
@@ -274,10 +366,7 @@ export class Tickets implements OnInit {
       return true;
     }
 
-    return (
-      this.hasPermission(PERMISSIONS_CATALOG.TICKET_CHANGE_STATUS) &&
-      (ticket.createdById === currentUser.id || ticket.assigneeId === currentUser.id)
-    );
+    return this.hasPermission('ticket:edit:state') || this.hasPermission('ticket:manage');
   }
 
   canComment(ticket: Ticket): boolean {
@@ -286,17 +375,18 @@ export class Tickets implements OnInit {
       return false;
     }
 
-    if (currentUser.isSuperAdmin) {
+    if (this.hasPermission('ticket:manage')) {
       return true;
     }
 
-    return (
-      this.hasPermission(PERMISSIONS_CATALOG.TICKET_COMMENT) &&
-      (ticket.createdById === currentUser.id || ticket.assigneeId === currentUser.id)
-    );
+    return this.hasPermission('ticket:edit:comment');
   }
 
-  hasPermission(permission: typeof PERMISSIONS_CATALOG[keyof typeof PERMISSIONS_CATALOG]): boolean {
+  hasPermission(permission: PermissionKey): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser?.isSuperAdmin) {
+      return true;
+    }
     return this.authService.getSession()?.permissions.includes(permission) ?? false;
   }
 
@@ -312,15 +402,70 @@ export class Tickets implements OnInit {
     return this.priorityOptions.find(option => option.value === priority)?.label ?? priority;
   }
 
-  private reloadTickets(): void {
-    const groupId = this.authService.getSession()?.selectedGroupId;
-    if (!groupId) {
-      this.tickets = [];
-      this.filteredTickets = [];
-      return;
+  private reloadTickets(groupIds?: string[]): void {
+    const effectiveGroupIds = (groupIds?.length ? groupIds : this.visibleGroupIds)
+      .filter((id, index, arr) => arr.indexOf(id) === index);
+
+    this.isLoading = true;
+    this.dataService.getAllTickets$().subscribe(allTickets => {
+      this.isLoading = false;
+      let scopedTickets = effectiveGroupIds.length
+        ? allTickets.filter(ticket => effectiveGroupIds.includes(ticket.groupId))
+        : allTickets;
+
+      // Last-resort visibility fallback for desynced group mappings on newly created users.
+      const finalTickets = (!scopedTickets.length && allTickets.length)
+        ? allTickets
+        : scopedTickets;
+
+      this.tickets = finalTickets
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      this.applyQuickFilter(this.quickFilter);
+    });
+  }
+
+  private hasAnyTicketPermission(user: AppUser | null, sessionPermissions: PermissionKey[]): boolean {
+    if (!user) return false;
+    if (user.isSuperAdmin) return true;
+    if (sessionPermissions.includes('ticket:view') || sessionPermissions.includes('ticket:manage')) {
+      return true;
     }
 
-    this.tickets = this.dataService.getTicketsByGroup(groupId);
-    this.applyQuickFilter(this.quickFilter);
+    return Object.values(user.permissionsByGroup ?? {}).some(groupPerms =>
+      groupPerms.includes('ticket:view') || groupPerms.includes('ticket:manage'),
+    );
+  }
+
+  private getAccessibleGroupIds(user: AppUser | null): string[] {
+    if (!user) {
+      return [];
+    }
+    const membershipGroupIds = user.groupIds ?? [];
+    const permissionGroupIds = Object.keys(user.permissionsByGroup ?? {});
+    const allGroupIds = [...new Set([...membershipGroupIds, ...permissionGroupIds])];
+    const byPermissions = allGroupIds.filter(groupId => this.hasTicketViewForGroup(user, groupId));
+    if (byPermissions.length) {
+      return byPermissions;
+    }
+
+    // Fallback: if the per-group map is stale/empty, still allow membership-based visibility.
+    return membershipGroupIds.length ? membershipGroupIds : allGroupIds;
+  }
+
+  private resolveAccessibleGroupId(user: AppUser | null, preferredGroupId: string | null): string | null {
+    const accessibleGroupIds = this.getAccessibleGroupIds(user);
+    if (preferredGroupId && accessibleGroupIds.includes(preferredGroupId)) {
+      return preferredGroupId;
+    }
+
+    return accessibleGroupIds[0] ?? null;
+  }
+
+  private hasTicketViewForGroup(user: AppUser, groupId: string): boolean {
+    if (user.isSuperAdmin) {
+      return true;
+    }
+    const permissions = user.permissionsByGroup[groupId] ?? [];
+    return permissions.includes('ticket:view') || permissions.includes('ticket:manage');
   }
 }

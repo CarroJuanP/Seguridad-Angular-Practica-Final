@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, AbstractControlOptions } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
 
 /* PrimeNG */
@@ -11,6 +12,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DividerModule } from 'primeng/divider';
+import { ToastModule } from 'primeng/toast';
+
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -25,7 +29,9 @@ import { DividerModule } from 'primeng/divider';
     InputTextModule,
     PasswordModule,
     DatePickerModule,
-    DividerModule
+    DividerModule,
+    ToastModule,
+    RouterModule,
   ],
   providers: [MessageService]
 })
@@ -33,8 +39,14 @@ export class Register {
 
   activeStep: number = 0;
   registerForm: FormGroup;
+  isLoading = false;
 
-  constructor(private readonly fb: FormBuilder, private readonly messageService: MessageService) {
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly messageService: MessageService,
+    private readonly auth: AuthService,
+    private readonly router: Router,
+  ) {
     this.registerForm = this.fb.group({
       nombreCompleto: ['', [Validators.required, this.notOnlySpacesValidator]],
       fechaNacimiento: [null, Validators.required],
@@ -93,20 +105,62 @@ export class Register {
     return this.registerForm.controls;
   }
 
-  registrar() {
-    if (this.registerForm.valid && this.esMayorDeEdad()) {
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Registro correcto',
-        detail: 'Usuario creado (sin backend)'
-      });
-      console.log('Formulario válido:', this.registerForm.value);
-    } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Formulario inválido',
-        detail: 'Revise los campos marcados'
-      });
+  registrar(activateCallback: (step: number) => void): void {
+    if (this.registerForm.invalid || !this.esMayorDeEdad()) {
+      this.registerForm.markAllAsTouched();
+      this.messageService.add({ severity: 'error', summary: 'Formulario inválido', detail: 'Revise los campos marcados' });
+      return;
     }
+
+    const {
+      nombreCompleto,
+      fechaNacimiento,
+      direccion,
+      telefono,
+      usuario,
+      email,
+      password,
+    } = this.registerForm.value;
+
+    const birthDate = fechaNacimiento instanceof Date
+      ? fechaNacimiento.toISOString().split('T')[0]
+      : String(fechaNacimiento ?? '');
+
+    this.isLoading = true;
+    this.auth.registerInSupabase({
+      email,
+      password,
+      name: nombreCompleto,
+      username: usuario,
+      phone: telefono,
+      birthDate,
+      address: direccion,
+    }).subscribe(result => {
+      if (!result.ok) {
+        this.isLoading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al registrar',
+          detail: result.message ?? 'No se pudo guardar el usuario en Supabase.',
+        });
+        return;
+      }
+
+      // Registro exitoso — hacer login automático con las mismas credenciales
+      this.auth.login(email, password).subscribe(user => {
+        this.isLoading = false;
+        if (user) {
+          this.messageService.add({
+            severity: 'success',
+            summary: '¡Bienvenido!',
+            detail: 'Cuenta creada en Supabase e ingresado correctamente.',
+          });
+          setTimeout(() => this.router.navigate([user.isSuperAdmin ? '/groups' : '/home']), 800);
+        } else {
+          // Registro OK pero login falló (raro): ir al paso 3 para que entren manualmente
+          activateCallback(3);
+        }
+      });
+    });
   }
 }

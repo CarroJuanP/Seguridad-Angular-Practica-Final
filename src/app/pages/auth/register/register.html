@@ -1,3 +1,4 @@
+<p-toast position="top-center"></p-toast>
 <div class="register-wrapper">
   <div class="register-card">
     <div class="card-header">
@@ -132,8 +133,9 @@
                     label="Registrar"
                     icon="pi pi-check"
                     iconPos="right"
-                    [disabled]="registerForm.invalid || registerForm.hasError('notMatching') || !esMayorDeEdad()"
-                    (onClick)="registrar(); activateCallback(3)"
+                    [loading]="isLoading"
+                    [disabled]="registerForm.invalid || registerForm.hasError('notMatching') || !esMayorDeEdad() || isLoading"
+                    (onClick)="registrar(activateCallback)"
                     class="btn-full">
                   </p-button>
                 </div>
@@ -152,13 +154,7 @@
                 </div>
 
                 <div class="button-group mt-5">
-                  <p-button
-                    label="Atrás"
-                    severity="secondary"
-                    icon="pi pi-arrow-left"
-                    (onClick)="activateCallback(2)"
-                    class="btn-secondary">
-                  </p-button>
+                  <p-button label="Ir al Login" icon="pi pi-sign-in" iconPos="right" routerLink="/login" class="btn-full"></p-button>
                 </div>
               </div>
             </ng-template>

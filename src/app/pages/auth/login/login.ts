@@ -71,8 +71,8 @@ export class Login {
         detail: `Bienvenido ${user.name}.`,
       });
 
-      // Navega siempre al dashboard (/home) - auth.service ya auto-selecciona el primer grupo
-      setTimeout(() => this.router.navigate(['/home']), 500);
+      // Superadmin va a grupos; el resto a la página de bienvenida.
+      setTimeout(() => this.router.navigate([user.isSuperAdmin ? '/groups' : '/home']), 500);
     });
   }
 

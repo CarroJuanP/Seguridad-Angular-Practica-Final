@@ -1,79 +1,229 @@
-<div class="user-page">
-  <div class="head-row">
-    <h2>Gestion de usuarios</h2>
-    <button *ifHasPermission="permissions.USER_ADD" pButton label="Nuevo usuario" icon="pi pi-plus" (click)="openNew()"></button>
+<p-toast></p-toast>
+
+<div class="card fade-in">
+  <h2 class="mb-3">Gestion de usuarios</h2>
+  <p class="mb-4">Administracion de usuarios del grupo seleccionado.</p>
+
+  <div class="flex gap-2 mb-3">
+    <button
+      *ifHasPermission="'user:add'"
+      pButton
+      label="Nuevo usuario"
+      icon="pi pi-plus"
+      class="p-button-success"
+      (click)="openNew()"
+    ></button>
   </div>
 
-  <p-table [value]="users" [paginator]="true" [rows]="8" responsiveLayout="scroll">
+  <p-table [value]="users" [tableStyle]="{ 'min-width': '60rem' }" dataKey="id" [expandedRowKeys]="expandedUsers">
     <ng-template pTemplate="header">
       <tr>
-        <th>Nombre</th>
-        <th>Usuario</th>
-        <th>Email</th>
-        <th>Tipo</th>
-        <th>Acciones</th>
+        <th scope="col" style="width: 3rem"></th>
+        <th scope="col">ID</th>
+        <th scope="col">Nombre</th>
+        <th scope="col">Usuario</th>
+        <th scope="col">Email</th>
+        <th scope="col">Grupos</th>
+        <th scope="col">Tipo</th>
+        <th scope="col">Acciones</th>
       </tr>
     </ng-template>
-    <ng-template pTemplate="body" let-user>
+
+    <ng-template pTemplate="body" let-user let-expanded="expanded">
       <tr>
+        <td>
+          <button
+            pButton
+            type="button"
+            [pRowToggler]="user"
+            [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+            class="p-button-text p-button-rounded p-button-plain"
+            [attr.aria-label]="expanded ? 'Contraer' : 'Expandir'"
+          ></button>
+        </td>
+        <td>{{ user.id }}</td>
         <td>{{ user.name }}</td>
         <td>{{ user.username }}</td>
         <td>{{ user.email }}</td>
+        <td>{{ userGroupLabels(user) }}</td>
         <td>
-          <p-tag [value]="user.isSuperAdmin ? 'superAdmin' : 'normal'" [severity]="user.isSuperAdmin ? 'danger' : 'info'"></p-tag>
+          <p-tag [value]="user.isSuperAdmin ? 'SuperAdmin' : 'Usuario'" [severity]="user.isSuperAdmin ? 'warn' : 'info'"></p-tag>
         </td>
         <td>
-          <button *ifHasPermission="permissions.USER_EDIT" pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" (click)="editUser(user)"></button>
-          <button *ifHasPermission="permissions.USER_DELETE" pButton icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" (click)="deleteUser(user)"></button>
+          <div class="flex gap-2">
+            <button
+              *ifHasPermission="'user:edit'"
+              pButton
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-warning p-button-text"
+              aria-label="Editar"
+              (click)="editUser(user)"
+            ></button>
+            <button
+              *ifHasPermission="'user:delete'"
+              pButton
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-danger p-button-text"
+              aria-label="Eliminar"
+              (click)="deleteUser(user)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="rowexpansion" let-user>
+      <tr>
+        <td colspan="8" class="expanded-row-cell">
+          <div class="expanded-permissions">
+            <ng-container *ngFor="let group of userPermissionsByGroup(user)">
+              <div class="expanded-group-row">
+                <span class="expanded-group-name">{{ group.groupName }}</span>
+                <div class="expanded-chips">
+                  <ng-container *ngIf="group.permissions.length; else noPerms">
+                    <span class="expanded-chip" *ngFor="let perm of group.permissions">{{ perm }}</span>
+                  </ng-container>
+                  <ng-template #noPerms>
+                    <span class="expanded-no-perms">Sin permisos asignados</span>
+                  </ng-template>
+                </div>
+              </div>
+            </ng-container>
+            <div class="expanded-group-row" *ngIf="!userPermissionsByGroup(user).length">
+              <span class="expanded-no-perms">Usuario sin grupos asignados.</span>
+            </div>
+          </div>
         </td>
       </tr>
     </ng-template>
   </p-table>
 </div>
 
-<p-dialog [(visible)]="dialogVisible" [modal]="true" [style]="{ width: '700px' }" [header]="isNew ? 'Crear usuario' : 'Editar usuario'">
-  <div class="form-grid">
-    <label>Nombre</label>
-    <input pInputText [(ngModel)]="formData.name" />
+<p-dialog
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [header]="isNew ? 'Nuevo usuario' : 'Editar usuario'"
+  [style]="{ width: 'min(920px, 96vw)' }"
+>
+  <div class="user-dialog-layout">
+    <section class="user-dialog-card">
+      <div class="section-heading">
+        <h3>Datos generales</h3>
+        <p>Captura la informacion base del usuario y su acceso.</p>
+      </div>
 
-    <label>Usuario</label>
-    <input pInputText [(ngModel)]="formData.username" />
+      <div class="user-form-grid">
+        <div class="field-block field-block-full">
+          <label for="userName">Nombre</label>
+          <input id="userName" pInputText [(ngModel)]="formData.name" placeholder="Nombre completo" />
+        </div>
 
-    <label>Email</label>
-    <input pInputText [(ngModel)]="formData.email" />
+        <div class="field-block">
+          <label for="userUsername">Usuario</label>
+          <input id="userUsername" pInputText [(ngModel)]="formData.username" placeholder="usuario" />
+        </div>
 
-    <label>Password</label>
-    <input pInputText [(ngModel)]="formData.password" />
+        <div class="field-block">
+          <label for="userEmail">Email</label>
+          <input id="userEmail" pInputText [(ngModel)]="formData.email" placeholder="correo@dominio.com" />
+        </div>
 
-    <label>Telefono</label>
-    <input pInputText [(ngModel)]="formData.phone" />
+        <div class="field-block">
+          <label for="userPassword">{{ isNew ? 'Password' : 'Nueva password (opcional)' }}</label>
+          <input
+            id="userPassword"
+            pInputText
+            type="password"
+            [(ngModel)]="formData.password"
+            [placeholder]="isNew ? 'Temporal@1234' : 'Deja vacio para conservar la actual'"
+          />
+        </div>
 
-    <label>Direccion</label>
-    <input pInputText [(ngModel)]="formData.address" />
+        <div class="field-block">
+          <label for="userPhone">Telefono</label>
+          <input id="userPhone" pInputText [(ngModel)]="formData.phone" placeholder="5551234567" />
+        </div>
 
-    <label>Tipo usuario</label>
-    <p-select
-      [options]="[{ label: 'normal', value: false }, { label: 'superAdmin', value: true }]"
-      optionLabel="label"
-      optionValue="value"
-      [(ngModel)]="formData.isSuperAdmin"
-    ></p-select>
+        <div class="field-block">
+          <label for="userBirthDate">Fecha de nacimiento</label>
+          <input id="userBirthDate" pInputText type="date" [(ngModel)]="formData.birthDate" />
+        </div>
 
-    <label>Permisos para la sesion actual</label>
-    <div class="permissions-grid">
-      <button
-        type="button"
-        pButton
-        *ngFor="let permission of allPermissions"
-        [label]="permission"
-        [severity]="hasPermissionChecked(permission) ? 'primary' : 'secondary'"
-        (click)="togglePermission(permission)"
-      ></button>
-    </div>
+        <div class="field-block field-block-full">
+          <label for="userAddress">Direccion</label>
+          <input id="userAddress" pInputText [(ngModel)]="formData.address" placeholder="Direccion del usuario" />
+        </div>
+      </div>
+    </section>
+
+    <section class="user-dialog-card">
+      <div class="section-heading">
+        <h3>Grupos visibles</h3>
+        <p>Selecciona uno o varios grupos a los que el usuario podra entrar.</p>
+      </div>
+
+      <div class="group-selector-grid">
+        <label
+          *ngFor="let group of availableGroups"
+          class="group-option"
+          [class.group-option-selected]="formData.groupIds.includes(group.value)"
+        >
+          <input
+            type="checkbox"
+            [ngModel]="formData.groupIds.includes(group.value)"
+            (ngModelChange)="onGroupCheckedChange(group.value, $event)"
+          />
+          <span class="group-option-content">
+            <strong>{{ group.label }}</strong>
+            <small>{{ group.description }}</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="selection-summary">
+        <span>Grupos seleccionados</span>
+        <strong>{{ selectedGroupLabels() }}</strong>
+      </div>
+    </section>
+
+    <section class="user-dialog-card">
+      <div class="section-heading">
+        <h3>Permisos por grupo</h3>
+        <p>Elige el grupo y activa los permisos que aplican solo para ese grupo.</p>
+      </div>
+
+      <div class="permission-toolbar" *ngIf="permissionGroupOptions().length > 0">
+        <label for="permissionGroupSelect">Editar permisos de</label>
+        <p-select
+          id="permissionGroupSelect"
+          [options]="permissionGroupOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="permissionGroupId"
+          placeholder="Selecciona un grupo"
+        ></p-select>
+      </div>
+
+      <div class="selection-summary selection-summary-empty" *ngIf="permissionGroupOptions().length === 0">
+        <span>Selecciona primero uno o mas grupos para editar permisos.</span>
+      </div>
+
+      <div class="permission-chip-grid" *ngIf="permissionGroupOptions().length > 0">
+        <button
+          pButton
+          type="button"
+          class="p-button-sm permission-chip"
+          *ngFor="let permission of allPermissions"
+          [severity]="hasPermissionChecked(permission) ? 'primary' : 'secondary'"
+          [label]="permission"
+          (click)="togglePermission(permission)"
+        ></button>
+      </div>
+    </section>
   </div>
 
   <ng-template pTemplate="footer">
-    <button pButton label="Cancelar" class="p-button-text" (click)="dialogVisible = false"></button>
-    <button pButton label="Guardar" (click)="saveUser()"></button>
+    <button pButton type="button" class="p-button-text" label="Cancelar" (click)="dialogVisible = false"></button>
+    <button pButton type="button" label="Guardar" [loading]="isLoading" (click)="saveUser()"></button>
   </ng-template>
 </p-dialog>

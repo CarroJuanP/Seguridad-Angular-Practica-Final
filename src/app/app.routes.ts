@@ -10,7 +10,7 @@ import { Groups } from './pages/groups/groups';
 import { UserPage } from './pages/user/user';
 import { Tickets } from './pages/tickets/tickets';
 import { Profile } from './pages/profile/profile';
-import { PERMISSIONS_CATALOG } from './models/permissions.model';
+
 
 export const routes: Routes = [
   { path: '', component: Landing },
@@ -27,12 +27,12 @@ export const routes: Routes = [
       {
         path: 'users',
         component: UserPage,
-        canActivate: [permissionsGuard(PERMISSIONS_CATALOG.USER_VIEW)],
+        canActivate: [permissionsGuard('user:view')],
       },
       {
         path: 'tickets',
         component: Tickets,
-        canActivate: [permissionsGuard(PERMISSIONS_CATALOG.TICKET_READ)],
+        canActivate: [permissionsGuard('ticket:view')],
       },
       { path: 'profile', component: Profile },
     ],

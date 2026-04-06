@@ -1,8 +1,32 @@
+<!-- Welcome Section (when no group selected) -->
+<div class="home-container" *ngIf="!selectedGroup">
+  <p-card styleClass="hero-card">
+    <div class="hero-content">
+      <div>
+        <h2 class="m-0">¡Bienvenido, {{ userName }}!</h2>
+        <p class="mt-3 mb-2" *ngIf="canSeeGroups">Para comenzar, selecciona un grupo y haz clic en "Entrar" para ver tus tickets y dashboard.</p>
+        <p class="mt-3 mb-2 text-500" *ngIf="!canSeeGroups">Tu cuenta no tiene permisos para ver grupos.</p>
+        <button *ngIf="canSeeGroups" pButton label="Ir a Grupos" icon="pi pi-arrow-right" (click)="onGoToGroups()" class="p-button-lg"></button>
+      </div>
+    </div>
+  </p-card>
+</div>
+
+<!-- Dashboard Section (when group selected) -->
 <div class="home-container" *ngIf="selectedGroup as group">
   <p-card styleClass="hero-card">
     <div class="hero-content">
       <div>
         <h2 class="m-0">Dashboard: {{ group.name }}</h2>
+        <div class="mt-2">
+          <span
+            class="p-tag"
+            [style.background]="group.llmColor"
+            style="color: #fff; border-radius: 999px; padding: 0.2rem 0.7rem; font-weight: 600"
+          >
+            Perfil: {{ group.llmModel }}
+          </span>
+        </div>
         <p class="mt-2 mb-0">{{ group.description }}</p>
       </div>
     </div>
@@ -32,7 +56,7 @@
 
     <div *ngIf="!recentTickets.length" class="text-500">No hay tickets en este grupo.</div>
 
-    <div class="mt-3" *ifHasPermission="permissions.TICKET_CREATE">
+    <div class="mt-3" *ifHasPermission="$any('ticket:add')">
       <button pButton label="Crear ticket" icon="pi pi-plus" (click)="openKanban()"></button>
     </div>
   </p-card>

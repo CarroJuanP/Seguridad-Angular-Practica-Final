@@ -5,18 +5,44 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: linear-gradient(135deg, rgba(124,58,237,0.02) 0%, rgba(6,182,212,0.02) 100%);
+  background: transparent;
 }
 
 /** Registro Card **/
 .register-card {
   width: 100%;
   max-width: 550px;
-  background: white;
+  background: rgba(8, 26, 42, 0.82) !important;
+  color: #e5eef9 !important;
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(191, 219, 254, 0.25);
+  box-shadow: 0 14px 42px rgba(2, 6, 23, 0.45);
   padding: 3rem;
   animation: slideUp 0.3s ease;
+}
+
+/* Force readable typography on dark register background */
+.register-card,
+.register-card h1,
+.register-card h2,
+.register-card h3,
+.register-card p,
+.register-card label,
+.register-card span,
+.register-card small,
+.register-card .p-step-title,
+.register-card .p-step-number,
+.register-card .p-stepper-separator {
+  color: #eaf2ff !important;
+}
+
+/* Keep text dark inside light inputs for contrast */
+.register-card input,
+.register-card textarea,
+.register-card .p-inputtext,
+.register-card .p-password input,
+.register-card .p-datepicker input {
+  color: #334155 !important;
 }
 
 @keyframes slideUp {
@@ -34,7 +60,7 @@
 .card-header {
   text-align: center;
   margin-bottom: 2rem;
-  border-bottom: 2px solid #f3f4f6;
+  border-bottom: 1px solid rgba(191, 219, 254, 0.35);
   padding-bottom: 1.5rem;
 }
 
@@ -48,19 +74,19 @@
 .card-header h2 {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #f8fbff !important;
   margin: 0;
 }
 
 .header-subtitle {
-  color: #374151;
+  color: #dbeafe !important;
   font-size: 0.95rem;
   margin-top: 0.5rem;
 }
 
 /* colorful accent under header */
 .register-card .card-header {
-  background: linear-gradient(90deg, rgba(124,58,237,0.08), rgba(6,182,212,0.06));
+  background: linear-gradient(90deg, rgba(13, 59, 102, 0.55), rgba(31, 78, 121, 0.4));
   border-radius: 12px 12px 8px 8px;
 }
 
@@ -87,7 +113,7 @@
 .field-label {
   display: block;
   font-weight: 600;
-  color: #1f2937;
+  color: #e2e8f0 !important;
   margin-bottom: 0.75rem;
   font-size: 0.95rem;
 }
@@ -189,6 +215,26 @@
   filter: brightness(0.95);
 }
 
+.register-card ::ng-deep .p-button.p-button-secondary {
+  background: #e2e8f0 !important;
+  border: 1px solid #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+.register-card ::ng-deep .p-button.p-button-secondary:hover {
+  background: #cbd5e1 !important;
+  border-color: #64748b !important;
+  color: #0f172a !important;
+}
+
+.register-card ::ng-deep .p-button:disabled,
+.register-card ::ng-deep .p-button.p-disabled {
+  background: #94a3b8 !important;
+  border-color: #94a3b8 !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
 .register-card ::ng-deep .p-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -202,12 +248,33 @@
   border-radius: 50%;
 }
 
+.register-card ::ng-deep .p-step-title,
+.register-card ::ng-deep .p-step-number,
+.register-card ::ng-deep .p-stepper-separator {
+  color: #e5eef9 !important;
+}
+
+.register-card ::ng-deep .p-step-header {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(191, 219, 254, 0.5) !important;
+}
+
 .register-card ::ng-deep .p-step-header.p-highlight {
   background-color: var(--primary-color) !important;
 }
 
 .register-card ::ng-deep .p-step-header.p-completed {
   background-color: var(--secondary-color) !important;
+}
+
+.register-card ::ng-deep .p-step-header.p-highlight .p-step-number,
+.register-card ::ng-deep .p-step-header.p-completed .p-step-number {
+  color: #ffffff !important;
+}
+
+.register-card ::ng-deep .p-divider .p-divider-content,
+.register-card ::ng-deep .p-divider .p-divider-horizontal:before {
+  border-color: rgba(191, 219, 254, 0.45) !important;
 }
 
 .register-card ::ng-deep .p-datepicker {

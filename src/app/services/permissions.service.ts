@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthService } from './auth.service';
-import { ALL_PERMISSIONS, PermissionKey } from '../models/permissions.model';
+import { PermissionKey } from '../models/permissions.model';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {
@@ -44,11 +44,6 @@ export class PermissionsService {
     return [...this.permissionsSubject.value.values()];
   }
 
-  isSuperAdmin(): boolean {
-    const currentUser = this.authService.getCurrentUser();
-    return currentUser?.isSuperAdmin ?? false;
-  }
-
   private syncFromSession(): void {
     const session = this.authService.getSession();
     const currentUser = this.authService.getCurrentUser();
@@ -62,11 +57,6 @@ export class PermissionsService {
 
     if (session && !session.selectedGroupId && fallbackGroupId) {
       this.authService.updateSession({ selectedGroupId: fallbackGroupId });
-    }
-
-    if (currentUser.isSuperAdmin) {
-      this.permissionsSubject.next(new Set(ALL_PERMISSIONS));
-      return;
     }
 
     let selectedGroupId = session?.selectedGroupId ?? fallbackGroupId;
@@ -85,9 +75,18 @@ export class PermissionsService {
       ? (currentUser.permissionsByGroup[selectedGroupId] ?? [])
       : [];
 
-    // Asegúrate de que la sesión tenga los permisos reflejados
-    if (session && session.permissions?.length === 0 && groupPermissions.length > 0) {
-      this.authService.updateSession({ permissions: groupPermissions });
+    // Mantiene la sesión alineada con los permisos actuales del grupo.
+    // Esto evita que queden permisos obsoletos después de cambios en usuarios.
+    if (session) {
+      const sessionPermissions = session.permissions ?? [];
+      const sameLength = sessionPermissions.length === groupPermissions.length;
+      const sameValues =
+        sameLength &&
+        sessionPermissions.every(permission => groupPermissions.includes(permission));
+
+      if (!sameValues) {
+        this.authService.updateSession({ permissions: groupPermissions });
+      }
     }
 
     this.permissionsSubject.next(new Set(groupPermissions));

@@ -17,6 +17,89 @@
   flex-wrap: wrap;
 }
 
+.view-rocker {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid #d8e1ef;
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  background: linear-gradient(180deg, #fbfdff 0%, #eef5ff 100%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.85);
+}
+
+.rocker-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #6b7280;
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 0.2rem 0.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.rocker-label.active {
+  color: #0d3b66;
+}
+
+.rocker-switch {
+  position: relative;
+  width: 70px;
+  height: 34px;
+  display: inline-block;
+}
+
+.rocker-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.rocker-slider {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.rocker-slider::before {
+  content: 'O';
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: linear-gradient(180deg, #ffffff 0%, #d8e1ee 100%);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.35);
+  transition: transform 0.25s ease, content 0.25s ease;
+}
+
+.rocker-switch input:checked + .rocker-slider {
+  background: linear-gradient(180deg, #166534 0%, #14532d 100%);
+}
+
+.rocker-switch input:checked + .rocker-slider::before {
+  transform: translateX(36px);
+  content: 'I';
+}
+
+.rocker-switch input:focus-visible + .rocker-slider {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
 .kanban-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

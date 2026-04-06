@@ -7,13 +7,15 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
 import { IfHasPermissionDirective } from '../../directives/has-permission';
 import { AuthService } from '../../services/auth.service';
+import { Permissions } from '../../services/permissions';
 import {
   ALL_PERMISSIONS,
   AppUser,
-  PERMISSIONS_CATALOG,
   PermissionKey,
 } from '../../models/permissions.model';
 
@@ -29,53 +31,91 @@ import {
     InputTextModule,
     SelectModule,
     TagModule,
+    ToastModule,
     IfHasPermissionDirective,
   ],
   templateUrl: './user.html',
   styleUrls: ['./user.css'],
+  providers: [MessageService],
 })
 export class UserPage implements OnInit {
-  permissions = PERMISSIONS_CATALOG;
+  private readonly passwordPolicy = /^(?=.*[!@#$%^&*])\S+$/;
+
+  permissions = { USER_ADD: 'user:add', USER_EDIT: 'user:edit', USER_DELETE: 'user:delete' };
   allPermissions = ALL_PERMISSIONS;
   users: AppUser[] = [];
+  groupNameMap: Record<string, string> = {};
+  availableGroups: Array<{ label: string; value: string; description: string }> = [];
+  isLoading = false;
   selectedGroupId: string | null = null;
+  isCurrentUserSuperAdmin = false;
+  permissionGroupId: string | null = null;
+  expandedUsers: Record<string, boolean> = {};
 
   dialogVisible = false;
   isNew = false;
   formData: AppUser = this.emptyUser();
+  private originalPassword = '';
 
-  constructor(private readonly authService: AuthService, private readonly router: Router) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly dataService: Permissions,
+    private readonly messageService: MessageService,
+    private readonly router: Router,
+  ) {}
 
   ngOnInit(): void {
     const currentUser = this.authService.getCurrentUser();
-    this.selectedGroupId = this.authService.getSession()?.selectedGroupId ?? null;
+    this.isCurrentUserSuperAdmin = currentUser?.isSuperAdmin ?? false;
+    const session = this.authService.getSession();
+    this.selectedGroupId = session?.selectedGroupId ?? currentUser?.groupIds[0] ?? null;
 
-    if (!currentUser?.isSuperAdmin) {
+    if (!(session?.permissions ?? []).includes('user:view')) {
       this.router.navigate(['/home']);
       return;
     }
-
     if (!this.selectedGroupId) {
       this.router.navigate(['/groups']);
       return;
     }
 
+    // Build group name map for display
+    this.dataService.getGroups$().subscribe(groups => {
+      this.groupNameMap = Object.fromEntries(groups.map(g => [g.id, g.name]));
+      const allowedGroups = this.isCurrentUserSuperAdmin
+        ? groups
+        : groups.filter(group => currentUser?.groupIds.includes(group.id));
+      this.availableGroups = allowedGroups.map(group => ({
+        label: group.name,
+        value: group.id,
+        description: group.description,
+      }));
+    });
+
     this.loadUsers();
   }
 
   loadUsers(): void {
-    const groupId = this.selectedGroupId;
-    const all = this.authService.getUsers();
-    this.users = groupId ? all.filter(user => user.groupIds.includes(groupId)) : all;
+    this.isLoading = true;
+    this.authService.getUsers$().subscribe(users => {
+      this.isLoading = false;
+      const groupId = this.selectedGroupId;
+      this.users = this.isCurrentUserSuperAdmin
+        ? users
+        : groupId ? users.filter(u => u.groupIds.includes(groupId)) : users;
+    });
   }
 
   openNew(): void {
     const groupId = this.selectedGroupId;
     this.formData = this.emptyUser();
-
+    this.originalPassword = '';
     if (groupId) {
       this.formData.groupIds = [groupId];
-      this.formData.permissionsByGroup[groupId] = [PERMISSIONS_CATALOG.TICKET_READ];
+      this.formData.permissionsByGroup[groupId] = ['ticket:view'];
+      this.permissionGroupId = groupId;
+    } else {
+      this.permissionGroupId = null;
     }
 
     this.isNew = true;
@@ -84,38 +124,116 @@ export class UserPage implements OnInit {
 
   editUser(user: AppUser): void {
     this.formData = structuredClone(user);
+    this.originalPassword = user.password ?? '';
+    // Avoid showing the current password/hash in UI; only set when user wants to change it.
+    this.formData.password = '';
+    const permissionGroupIds = Object.keys(this.formData.permissionsByGroup ?? {});
+    this.formData.groupIds = [...new Set([...(this.formData.groupIds ?? []), ...permissionGroupIds])];
+
+    const candidateGroup =
+      this.selectedGroupId && this.formData.groupIds.includes(this.selectedGroupId)
+        ? this.selectedGroupId
+        : this.formData.groupIds[0] ?? this.selectedGroupId;
+
+    this.permissionGroupId = candidateGroup ?? null;
+
+    if (this.permissionGroupId && !this.formData.permissionsByGroup[this.permissionGroupId]) {
+      this.formData.permissionsByGroup[this.permissionGroupId] = [];
+    }
+
     this.isNew = false;
     this.dialogVisible = true;
   }
 
   saveUser(): void {
-    const users = this.authService.getUsers();
+    if (!this.formData.name.trim() || !this.formData.username.trim() || !this.formData.email.trim()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Datos incompletos',
+        detail: 'Nombre, usuario y email son obligatorios.',
+      });
+      return;
+    }
 
-    if (this.isNew) {
-      this.formData.id = `u-${Math.random().toString(36).slice(2, 8)}`;
-      users.push({ ...this.formData });
-    } else {
-      const index = users.findIndex(user => user.id === this.formData.id);
-      if (index >= 0) {
-        users[index] = { ...this.formData };
+    if (!this.formData.groupIds.length) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Sin grupos',
+        detail: 'Selecciona al menos un grupo para el usuario.',
+      });
+      return;
+    }
+
+    if (this.isNew && !this.formData.password.trim()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Password requerida',
+        detail: 'Captura una password para el usuario nuevo.',
+      });
+      return;
+    }
+
+    const hasNewPassword = Boolean(this.formData.password.trim());
+    if (hasNewPassword) {
+      const newPassword = this.formData.password.trim();
+      const isValid = newPassword.length >= 10 && this.passwordPolicy.test(newPassword);
+      if (!isValid) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Password invalida',
+          detail: 'Usa minimo 10 caracteres, al menos un simbolo (!@#$%^&*) y sin espacios.',
+        });
+        return;
       }
     }
 
-    this.authService.saveUsers(users);
-    this.dialogVisible = false;
-    this.loadUsers();
+    const userToSave: AppUser = {
+      ...this.formData,
+      password: this.isNew
+        ? this.formData.password.trim()
+        : (this.formData.password.trim() || this.originalPassword),
+    };
+
+    this.isLoading = true;
+    this.authService.upsertUserInDB$(userToSave, this.isNew).subscribe(result => {
+      this.isLoading = false;
+      if (result.ok) {
+        this.dialogVisible = false;
+        this.messageService.add({
+          severity: 'success',
+          summary: this.isNew ? 'Usuario creado' : 'Usuario actualizado',
+          detail: this.formData.name,
+        });
+        this.loadUsers();
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: result.message ?? 'No se pudo guardar el usuario',
+        });
+      }
+    });
   }
 
   deleteUser(user: AppUser): void {
-    const users = this.authService.getUsers().filter(current => current.id !== user.id);
-    this.authService.saveUsers(users);
-    this.loadUsers();
+    this.authService.deleteUserFromDB$(user.id).subscribe(result => {
+      if (result.ok) {
+        this.messageService.add({ severity: 'success', summary: 'Usuario eliminado', detail: user.name });
+        this.loadUsers();
+      } else {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el usuario' });
+      }
+    });
   }
 
   togglePermission(permission: PermissionKey): void {
-    const groupId = this.selectedGroupId;
+    const groupId = this.permissionGroupId;
     if (!groupId) {
       return;
+    }
+
+    if (!this.formData.groupIds.includes(groupId)) {
+      this.formData.groupIds = [...this.formData.groupIds, groupId];
     }
 
     const current = this.formData.permissionsByGroup[groupId] ?? [];
@@ -126,12 +244,66 @@ export class UserPage implements OnInit {
   }
 
   hasPermissionChecked(permission: PermissionKey): boolean {
-    const groupId = this.selectedGroupId;
+    const groupId = this.permissionGroupId;
     if (!groupId) {
       return false;
     }
 
     return (this.formData.permissionsByGroup[groupId] ?? []).includes(permission);
+  }
+
+  onGroupCheckedChange(groupId: string, checked: boolean): void {
+    const nextGroupIds = checked
+      ? [...this.formData.groupIds, groupId]
+      : this.formData.groupIds.filter(currentGroupId => currentGroupId !== groupId);
+
+    this.onGroupsSelectionChange(nextGroupIds);
+  }
+
+  onGroupsSelectionChange(groupIds: string[]): void {
+    const uniqueGroupIds = [...new Set(groupIds)];
+    const nextPermissions: Record<string, PermissionKey[]> = {};
+
+    for (const groupId of uniqueGroupIds) {
+      nextPermissions[groupId] = this.formData.permissionsByGroup[groupId] ?? ['ticket:view'];
+    }
+
+    this.formData.groupIds = uniqueGroupIds;
+    this.formData.permissionsByGroup = nextPermissions;
+
+    if (!this.permissionGroupId || !uniqueGroupIds.includes(this.permissionGroupId)) {
+      this.permissionGroupId = uniqueGroupIds[0] ?? null;
+    }
+  }
+
+  selectedGroupLabels(): string {
+    if (!this.formData.groupIds.length) {
+      return 'Sin grupos asignados';
+    }
+
+    return this.formData.groupIds
+      .map(groupId => this.groupNameMap[groupId] ?? groupId)
+      .join(', ');
+  }
+
+  userPermissionsByGroup(user: AppUser): Array<{ groupName: string; permissions: PermissionKey[] }> {
+    return this.displayGroupIds(user).map(groupId => ({
+      groupName: this.groupNameMap[groupId] ?? groupId,
+      permissions: user.permissionsByGroup[groupId] ?? [],
+    }));
+  }
+
+  userGroupLabels(user: AppUser): string {
+    return this.displayGroupIds(user)
+      .map(groupId => this.groupNameMap[groupId] ?? groupId)
+      .join(', ');
+  }
+
+  permissionGroupOptions(): { label: string; value: string }[] {
+    return this.formData.groupIds.map(id => ({
+      label: this.groupNameMap[id] ?? id,
+      value: id,
+    }));
   }
 
   private emptyUser(): AppUser {
@@ -148,5 +320,11 @@ export class UserPage implements OnInit {
       groupIds: [],
       permissionsByGroup: {},
     };
+  }
+
+  private displayGroupIds(user: AppUser): string[] {
+    const membershipGroupIds = user.groupIds ?? [];
+    const permissionGroupIds = Object.keys(user.permissionsByGroup ?? {});
+    return [...new Set([...membershipGroupIds, ...permissionGroupIds])];
   }
 }

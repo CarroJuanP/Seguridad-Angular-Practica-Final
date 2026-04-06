@@ -10,6 +10,7 @@
     <ng-template pTemplate="header">
       <tr>
         <th scope="col">Grupo</th>
+        <th scope="col">Perfil</th>
         <th scope="col">Descripcion</th>
         <th scope="col">Acciones</th>
       </tr>
@@ -18,12 +19,21 @@
     <ng-template pTemplate="body" let-group>
       <tr [class.row-active]="selectedGroupId === group.id">
         <td>{{ group.name }}</td>
+        <td>
+          <span
+            class="p-tag"
+            [style.background]="group.llmColor"
+            style="color: #fff; border-radius: 999px; padding: 0.2rem 0.6rem; font-weight: 600"
+          >
+            {{ group.llmModel }}
+          </span>
+        </td>
         <td>{{ group.description }}</td>
         <td class="actions">
           <button pButton label="Entrar" icon="pi pi-arrow-right" class="p-button-sm" (click)="selectGroup(group)"></button>
 
           <button
-            *ifHasPermission="permissions.GROUP_EDIT"
+            *ifHasPermission="$any('group:edit')"
             pButton
             icon="pi pi-users"
             class="p-button-rounded p-button-info p-button-text"
@@ -31,7 +41,7 @@
           ></button>
 
           <button
-            *ifHasPermission="permissions.GROUP_EDIT"
+            *ifHasPermission="$any('group:edit')"
             pButton
             icon="pi pi-pencil"
             class="p-button-rounded p-button-warning p-button-text"
@@ -39,7 +49,7 @@
           ></button>
 
           <button
-            *ifHasPermission="permissions.GROUP_DELETE"
+            *ifHasPermission="$any('group:delete')"
             pButton
             icon="pi pi-trash"
             class="p-button-rounded p-button-danger p-button-text"
@@ -50,7 +60,7 @@
     </ng-template>
   </p-table>
 
-  <div class="mt-3" *ifHasPermission="permissions.GROUP_ADD">
+  <div class="mt-3" *ifHasPermission="$any('group:add')">
     <button pButton type="button" icon="pi pi-plus" label="Nuevo grupo" (click)="openNew()"></button>
   </div>
 

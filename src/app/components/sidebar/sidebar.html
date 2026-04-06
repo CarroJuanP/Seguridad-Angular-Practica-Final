@@ -1,16 +1,21 @@
 <div class="sidebar p-shadow-2">
+  <!-- Header del sidebar -->
   <div class="sidebar-header text-center mb-4">
-    <i class="pi pi-user" style="font-size:2rem; color:#60a5fa;"></i>
+    <i class="pi pi-user" style="font-size:2rem; color:#3b82f6;"></i>
     <div class="mt-1 font-bold">{{ currentUserName }}</div>
     <small class="text-muted">{{ currentUserEmail }}</small>
   </div>
 
-  <h3 class="text-center mb-4">Navegacion</h3>
+  <!-- Título del menú -->
+  <h3 class="text-center mb-4">Menú</h3>
 
-  <button pButton label="Dashboard" icon="pi pi-home" routerLink="/home" class="w-full mb-2 p-button-rounded"></button>
+  <!-- Botones principales -->
+  <!-- Home -->
+  <button pButton label="Home" icon="pi pi-home" routerLink="/home" class="w-full mb-2 p-button-rounded"></button>
 
+  <!-- Grupos: requiere permisos de grupos -->
   <button
-    *ifHasPermission="permissions.GROUP_VIEW"
+    *ngIf="canSeeGroups"
     pButton
     label="Grupos"
     icon="pi pi-users"
@@ -18,27 +23,27 @@
     class="w-full mb-2 p-button-rounded"
   ></button>
 
+  <!-- Usuarios: requiere permisos de usuarios (admin) -->
   <button
-    *ifHasPermission="permissions.TICKET_READ"
+    *ngIf="canSeeUsers"
     pButton
-    label="Tickets"
-    icon="pi pi-list"
-    routerLink="/tickets"
+    label="Usuarios"
+    icon="pi pi-user-multiple"
+    routerLink="/users"
     class="w-full mb-2 p-button-rounded"
   ></button>
 
-  <button pButton label="Mi Perfil" icon="pi pi-user" routerLink="/profile" class="w-full mb-2 p-button-rounded"></button>
+  <!-- Mi Perfil -->
+  <button pButton label="Mi Perfil" icon="pi pi-user" routerLink="/profile" class="w-full mb-4 p-button-rounded"></button>
 
-  <button
-    *ifHasPermission="permissions.USER_VIEW"
-    pButton
-    label="Gestion Usuarios"
-    icon="pi pi-id-card"
-    routerLink="/users"
-    class="w-full mb-4 p-button-rounded"
-  ></button>
+  <!-- Separador -->
+  <hr style="margin:1rem 0; border-color:#e5e7eb;">
 
-  <hr style="margin:1rem 0; border-color:#334155;">
+  <!-- Botón de cierre de sesión -->
+  <button pButton label="Cerrar Sesión" icon="pi pi-sign-out" severity="danger" (click)="logout()" class="w-full p-button-rounded"></button>
 
-  <button pButton label="Cerrar Sesion" icon="pi pi-sign-out" severity="danger" (click)="logout()" class="w-full p-button-rounded"></button>
+  <!-- Footer opcional -->
+  <div class="sidebar-footer text-center mt-4 text-sm text-muted">
+    <i class="pi pi-info-circle"></i> Versión 1.0.0
+  </div>
 </div>
