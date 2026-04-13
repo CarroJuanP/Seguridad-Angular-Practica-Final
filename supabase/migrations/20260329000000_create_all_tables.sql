@@ -5,6 +5,8 @@
 --        user_group_permissions → tickets (+ auxiliares)
 -- =============================================================================
 
+-- Esta migracion levanta el esqueleto completo del dominio usado por el frontend Angular.
+
 -- ---------------------------------------------------------------------------
 -- 0. Extensiones
 -- ---------------------------------------------------------------------------
@@ -121,13 +123,22 @@ create table if not exists public.ticket_statuses (
   sort_order int  not null default 0
 );
 
-insert into public.ticket_statuses (name, sort_order) values
-  ('Pendiente',   1),
-  ('En progreso', 2),
-  ('En revisión', 3),
-  ('Hecho',       4),
-  ('Cancelado',   5)
-on conflict (name) do nothing;
+insert into public.ticket_statuses (name, sort_order)
+select seed.name, seed.sort_order
+from (
+  values
+    ('Pendiente',   1),
+    ('En progreso', 2),
+    ('En revisión', 3),
+    ('Hecho',       4),
+    ('Cancelado',   5)
+) as seed(name, sort_order)
+where not exists (
+  select 1
+  from public.ticket_statuses existing
+  where existing.name = seed.name
+     or existing.sort_order = seed.sort_order
+);
 
 -- ---------------------------------------------------------------------------
 -- 7. TICKET_PRIORITIES  (catálogo)
@@ -138,12 +149,21 @@ create table if not exists public.ticket_priorities (
   sort_order int  not null default 0
 );
 
-insert into public.ticket_priorities (name, sort_order) values
-  ('Baja',    1),
-  ('Media',   2),
-  ('Alta',    3),
-  ('Crítica', 4)
-on conflict (name) do nothing;
+insert into public.ticket_priorities (name, sort_order)
+select seed.name, seed.sort_order
+from (
+  values
+    ('Baja',    1),
+    ('Media',   2),
+    ('Alta',    3),
+    ('Crítica', 4)
+) as seed(name, sort_order)
+where not exists (
+  select 1
+  from public.ticket_priorities existing
+  where existing.name = seed.name
+     or existing.sort_order = seed.sort_order
+);
 
 -- ---------------------------------------------------------------------------
 -- 8. TICKETS

@@ -1,9 +1,10 @@
+<!-- Home cambia entre bienvenida simple y dashboard segun exista grupo activo. -->
 <!-- Welcome Section (when no group selected) -->
 <div class="home-container" *ngIf="!selectedGroup">
   <p-card styleClass="hero-card">
     <div class="hero-content">
       <div>
-        <h2 class="m-0">¡Bienvenido, {{ userName }}!</h2>
+        <h1 class="m-0">¡Bienvenido, {{ userName }}!</h1>
         <p class="mt-3 mb-2" *ngIf="canSeeGroups">Para comenzar, selecciona un grupo y haz clic en "Entrar" para ver tus tickets y dashboard.</p>
         <p class="mt-3 mb-2 text-500" *ngIf="!canSeeGroups">Tu cuenta no tiene permisos para ver grupos.</p>
         <button *ngIf="canSeeGroups" pButton label="Ir a Grupos" icon="pi pi-arrow-right" (click)="onGoToGroups()" class="p-button-lg"></button>
@@ -17,7 +18,7 @@
   <p-card styleClass="hero-card">
     <div class="hero-content">
       <div>
-        <h2 class="m-0">Dashboard: {{ group.name }}</h2>
+        <h1 class="m-0">Dashboard: {{ group.name }}</h1>
         <div class="mt-2">
           <span
             class="p-tag"
@@ -29,6 +30,24 @@
         </div>
         <p class="mt-2 mb-0">{{ group.description }}</p>
       </div>
+
+      <div class="selector-actions selector-actions-compact" *ngIf="groupSelectorOptions.length > 1">
+        <p-select
+          [options]="groupSelectorOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedGroupId"
+          placeholder="Cambiar grupo"
+          (ngModelChange)="onGroupSelectionChange($event)"
+        ></p-select>
+      </div>
+    </div>
+  </p-card>
+
+  <p-card *ngIf="ticketAccessMessage" styleClass="ticket-access-card">
+    <div class="ticket-access-copy">
+      <strong>{{ ticketAccessMessage }}</strong>
+      <span>Se muestran los conteos del grupo, pero no puedes entrar a Kanban ni ver el detalle de tickets.</span>
     </div>
   </p-card>
 
@@ -38,23 +57,108 @@
     <p-card><h3>En progreso</h3><div class="stat">{{ byStatus('En progreso') }}</div></p-card>
     <p-card><h3>Hecho</h3><div class="stat">{{ byStatus('Hecho') }}</div></p-card>
     <p-card><h3>Bloqueado</h3><div class="stat">{{ byStatus('Bloqueado') }}</div></p-card>
+    <p-card><h3>Alta prioridad</h3><div class="stat">{{ byPriority('Critica') + byPriority('Muy alta') + byPriority('Alta') }}</div></p-card>
+  </div>
+
+  <p-card>
+    <div class="card-head">
+      <h3 class="m-0">Mis grupos / workspaces</h3>
+    </div>
+
+    <div class="groups-pill-grid" *ngIf="userGroups.length; else noGroups">
+      <span class="group-pill" *ngFor="let workspace of userGroups" [style.border-color]="workspace.llmColor">
+        {{ workspace.name }}
+      </span>
+    </div>
+
+    <ng-template #noGroups>
+      <div class="text-500">No tienes grupos asignados.</div>
+    </ng-template>
+  </p-card>
+
+  <div class="summary-grid">
+    <p-card>
+      <div class="card-head">
+        <h3 class="m-0">Tickets por estado</h3>
+      </div>
+      <p-table [value]="ticketsByStatusSummary" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th scope="col">Estado</th>
+            <th scope="col">Total</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>{{ row.total }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <p-card>
+      <div class="card-head">
+        <h3 class="m-0">Tickets por prioridad</h3>
+      </div>
+      <p-table [value]="ticketsByPrioritySummary" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th scope="col">Prioridad</th>
+            <th scope="col">Total</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>{{ row.total }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <p-card>
+      <div class="card-head">
+        <h3 class="m-0">Tickets por grupo</h3>
+      </div>
+      <p-table [value]="ticketsByGroupSummary" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th scope="col">Grupo</th>
+            <th scope="col">Total</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.groupName }}</td>
+            <td>{{ row.total }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
   </div>
 
   <p-card>
     <div class="card-head">
       <h3 class="m-0">Tickets recientes / asignados</h3>
-      <button pButton label="Ver Kanban" icon="pi pi-table" (click)="openKanban()"></button>
+      <button pButton label="Ver Kanban" icon="pi pi-table" (click)="openKanban()" [disabled]="!canViewSelectedGroupTickets"></button>
     </div>
 
-    <div class="ticket-mini" *ngFor="let ticket of recentTickets">
-      <div>
-        <div class="ticket-title">{{ ticket.id }} - {{ ticket.title }}</div>
-        <small>Asignado a: {{ ticket.assigneeName || 'Sin asignar' }}</small>
+    <div class="ticket-access-empty" *ngIf="ticketAccessMessage; else recentTicketsBlock">
+      {{ ticketAccessMessage }}
+    </div>
+
+    <ng-template #recentTicketsBlock>
+      <div class="ticket-mini" *ngFor="let ticket of recentTickets">
+        <div>
+          <div class="ticket-title">{{ ticket.id }} - {{ ticket.title }}</div>
+          <small>Asignado a: {{ ticket.assigneeName || 'Sin asignar' }}</small>
+        </div>
+        <p-tag [value]="ticket.status"></p-tag>
       </div>
-      <p-tag [value]="ticket.status"></p-tag>
-    </div>
 
-    <div *ngIf="!recentTickets.length" class="text-500">No hay tickets en este grupo.</div>
+      <div *ngIf="!recentTickets.length" class="text-500">No hay tickets en este grupo.</div>
+    </ng-template>
 
     <div class="mt-3" *ifHasPermission="$any('ticket:add')">
       <button pButton label="Crear ticket" icon="pi pi-plus" (click)="openKanban()"></button>

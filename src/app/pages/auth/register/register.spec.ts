@@ -1,3 +1,4 @@
+// Smoke test del componente de registro.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Register } from './register';

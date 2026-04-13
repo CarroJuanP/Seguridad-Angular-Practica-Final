@@ -1,0 +1,244 @@
+{
+  "info": {
+    "name": "Practica2 Gateway API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Coleccion base para probar el gateway-api de Practica2 desde Postman."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{authToken}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "gatewayBaseUrl", "value": "http://127.0.0.1:54321/functions/v1/gateway-api" },
+    { "key": "identifier", "value": "admin@marher.com" },
+    { "key": "password", "value": "$p4$ww0rD1234" },
+    { "key": "authToken", "value": "" },
+    { "key": "groupId", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "ticketId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "const payload = response?.data ?? {};",
+                  "if (payload.token) { pm.environment.set('authToken', payload.token); }",
+                  "if (payload.user?.id) { pm.environment.set('userId', String(payload.user.id)); }",
+                  "const firstGroupId = Array.isArray(payload.user?.groupIds) && payload.user.groupIds.length > 0 ? payload.user.groupIds[0] : '';",
+                  "if (firstGroupId) { pm.environment.set('groupId', String(firstGroupId)); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{identifier}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{gatewayBaseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo.usuario@uteq.edu.mx\",\n  \"password\": \"Demo@12345!\",\n  \"name\": \"Nuevo Usuario\",\n  \"username\": \"nuevo.usuario\",\n  \"phone\": \"5551234567\",\n  \"birthDate\": \"2000-01-01\",\n  \"address\": \"Queretaro\"\n}"
+            },
+            "url": "{{gatewayBaseUrl}}/auth/register"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catalogos",
+      "item": [
+        { "name": "Permisos", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{gatewayBaseUrl}}/permissions" } },
+        { "name": "Estados Ticket", "request": { "method": "GET", "url": "{{gatewayBaseUrl}}/catalogs/ticket-statuses" } },
+        { "name": "Prioridades Ticket", "request": { "method": "GET", "url": "{{gatewayBaseUrl}}/catalogs/ticket-priorities" } }
+      ]
+    },
+    {
+      "name": "Groups",
+      "item": [
+        {
+          "name": "Listar Grupos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "const rows = Array.isArray(response?.data) ? response.data : [];",
+                  "if (rows[0]?.id) { pm.environment.set('groupId', String(rows[0].id)); }"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{gatewayBaseUrl}}/groups" }
+        },
+        {
+          "name": "Crear Grupo",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Workspace API\",\n  \"description\": \"Grupo creado desde Postman\",\n  \"llmModel\": \"Perfil Operativo\",\n  \"llmColor\": \"#F54927\"\n}"
+            },
+            "url": "{{gatewayBaseUrl}}/groups"
+          }
+        },
+        { "name": "Obtener Grupo", "request": { "method": "GET", "url": "{{gatewayBaseUrl}}/groups/{{groupId}}" } },
+        {
+          "name": "Actualizar Grupo",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"Actualizado desde Postman\"\n}" },
+            "url": "{{gatewayBaseUrl}}/groups/{{groupId}}"
+          }
+        },
+        { "name": "Eliminar Grupo", "request": { "method": "DELETE", "url": "{{gatewayBaseUrl}}/groups/{{groupId}}" } },
+        { "name": "Usuarios del Grupo", "request": { "method": "GET", "url": "{{gatewayBaseUrl}}/groups/{{groupId}}/users" } },
+        {
+          "name": "Agregar Miembro",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"userId\": \"{{userId}}\"\n}" },
+            "url": "{{gatewayBaseUrl}}/groups/{{groupId}}/users"
+          }
+        },
+        { "name": "Remover Miembro", "request": { "method": "DELETE", "url": "{{gatewayBaseUrl}}/groups/{{groupId}}/users/{{userId}}" } }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Listar Usuarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "const rows = Array.isArray(response?.data) ? response.data : [];",
+                  "const preferred = rows.find(row => row.email === pm.environment.get('identifier')) ?? rows[0];",
+                  "if (preferred?.id) { pm.environment.set('userId', String(preferred.id)); }"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{gatewayBaseUrl}}/users" }
+        },
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuario API\",\n  \"username\": \"usuario.api\",\n  \"email\": \"usuario.api@uteq.edu.mx\",\n  \"password\": \"Demo@12345!\",\n  \"phone\": \"5557654321\",\n  \"birthDate\": \"2001-06-10\",\n  \"address\": \"Queretaro\",\n  \"isSuperAdmin\": false,\n  \"groupIds\": [\"{{groupId}}\"],\n  \"permissionsByGroup\": {\n    \"{{groupId}}\": [\"ticket:view\", \"ticket:add\", \"ticket:edit:comment\"]\n  }\n}"
+            },
+            "url": "{{gatewayBaseUrl}}/users"
+          }
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Usuario API Editado\",\n  \"groupIds\": [\"{{groupId}}\"],\n  \"permissionsByGroup\": {\n    \"{{groupId}}\": [\"ticket:view\", \"ticket:add\", \"ticket:edit\", \"ticket:edit:state\"]\n  }\n}"
+            },
+            "url": "{{gatewayBaseUrl}}/users/{{userId}}"
+          }
+        },
+        { "name": "Eliminar Usuario", "request": { "method": "DELETE", "url": "{{gatewayBaseUrl}}/users/{{userId}}" } }
+      ]
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        {
+          "name": "Listar Tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "const rows = Array.isArray(response?.data) ? response.data : [];",
+                  "if (rows[0]?.id) { pm.environment.set('ticketId', String(rows[0].id)); }"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{gatewayBaseUrl}}/tickets" }
+        },
+        { "name": "Listar Tickets por Grupo", "request": { "method": "GET", "url": "{{gatewayBaseUrl}}/tickets?groupId={{groupId}}" } },
+        {
+          "name": "Crear Ticket",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"groupId\": \"{{groupId}}\",\n  \"title\": \"Ticket creado desde Postman\",\n  \"description\": \"Prueba end-to-end del gateway\",\n  \"status\": \"Pendiente\",\n  \"priority\": \"Media\",\n  \"dueDate\": \"2026-04-30\",\n  \"assigneeId\": \"{{userId}}\",\n  \"createdBy\": \"{{userId}}\"\n}"
+            },
+            "url": "{{gatewayBaseUrl}}/tickets"
+          }
+        },
+        { "name": "Obtener Ticket", "request": { "method": "GET", "url": "{{gatewayBaseUrl}}/tickets/{{ticketId}}" } },
+        {
+          "name": "Actualizar Ticket",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"En progreso\",\n  \"priority\": \"Alta\",\n  \"actorId\": \"{{userId}}\",\n  \"action\": \"Estado movido desde Postman\"\n}"
+            },
+            "url": "{{gatewayBaseUrl}}/tickets/{{ticketId}}"
+          }
+        },
+        {
+          "name": "Agregar Comentario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorId\": \"{{userId}}\",\n  \"message\": \"Comentario enviado desde Postman\"\n}"
+            },
+            "url": "{{gatewayBaseUrl}}/tickets/{{ticketId}}/comments"
+          }
+        },
+        { "name": "Eliminar Ticket", "request": { "method": "DELETE", "url": "{{gatewayBaseUrl}}/tickets/{{ticketId}}" } }
+      ]
+    }
+  ]
+}

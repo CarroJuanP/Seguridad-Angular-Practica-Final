@@ -1,3 +1,4 @@
+// Smoke test de la pagina administrativa de usuarios.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { UserPage } from './user';

@@ -1,3 +1,4 @@
+// Instancia la directiva con dependencias simuladas para validar su construccion basica.
 import { TemplateRef, ViewContainerRef } from '@angular/core';
 import { of } from 'rxjs';
 import { PermissionsService } from '../services/permissions.service';

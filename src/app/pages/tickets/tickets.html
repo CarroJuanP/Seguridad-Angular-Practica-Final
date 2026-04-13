@@ -1,9 +1,10 @@
+<!-- Vista de tickets en modo kanban o lista, con dialogos de alta y detalle. -->
 <p-toast></p-toast>
 
 <div class="ticket-page">
   <div class="head-row">
     <div>
-      <h2 class="m-0">Tablero de Tickets</h2>
+      <h1 class="m-0">Tablero de Tickets</h1>
       <div class="mt-2" *ngIf="selectedGroup as group">
         <span
           class="p-tag"
@@ -15,11 +16,11 @@
       </div>
     </div>
     <div class="head-actions">
-      <div class="view-rocker" role="group" aria-label="Cambiar vista de tickets">
-        <span class="rocker-label" [class.active]="!showTableView" (click)="onViewModeChange(false)">
+      <div class="view-rocker" aria-label="Cambiar vista de tickets">
+        <button type="button" class="rocker-label rocker-label-button" [class.active]="!showTableView" (click)="onViewModeChange(false)">
           <i class="pi pi-table"></i>
           Kanban
-        </span>
+        </button>
 
         <label class="rocker-switch" aria-label="Interruptor de vista">
           <input
@@ -30,13 +31,13 @@
           <span class="rocker-slider"></span>
         </label>
 
-        <span class="rocker-label" [class.active]="showTableView" (click)="onViewModeChange(true)">
+        <button type="button" class="rocker-label rocker-label-button" [class.active]="showTableView" (click)="onViewModeChange(true)">
           <i class="pi pi-list"></i>
           Lista
-        </span>
+        </button>
       </div>
       <button
-        *ifHasPermission="$any('ticket:add')"
+        *ngIf="canCreateTickets"
         pButton
         label="Crear ticket"
         icon="pi pi-plus"
@@ -45,11 +46,37 @@
     </div>
   </div>
 
+  <div class="context-strip">
+    <div class="context-card">
+      <span class="context-label">Espacio</span>
+      <strong>{{ selectedGroup?.name || 'Todos los grupos visibles' }}</strong>
+    </div>
+    <div class="context-card">
+      <span class="context-label">Resultados</span>
+      <strong>{{ visibleTicketCount }} tickets</strong>
+    </div>
+    <div class="context-card" *ngIf="hasActiveFilters">
+      <span class="context-label">Filtros activos</span>
+      <button pButton type="button" label="Limpiar" class="p-button-text p-button-sm" (click)="resetFilters()"></button>
+    </div>
+  </div>
+
+  <div class="loading-banner" *ngIf="isLoading">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>{{ pendingActionLabel || 'Actualizando tablero' }}...</span>
+  </div>
+
   <div class="quick-filters">
     <button pButton label="Todos" [severity]="quickFilter === 'all' ? 'primary' : 'secondary'" (click)="applyQuickFilter('all')"></button>
     <button pButton label="Mis tickets" [severity]="quickFilter === 'mine' ? 'primary' : 'secondary'" (click)="applyQuickFilter('mine')"></button>
     <button pButton label="Sin asignar" [severity]="quickFilter === 'unassigned' ? 'primary' : 'secondary'" (click)="applyQuickFilter('unassigned')"></button>
     <button pButton label="Prioridad alta" [severity]="quickFilter === 'high' ? 'primary' : 'secondary'" (click)="applyQuickFilter('high')"></button>
+  </div>
+
+  <div class="quick-filters quick-filters-secondary" *ngIf="viewMode === 'table'">
+    <p-select [options]="statusFilterOptions" [(ngModel)]="statusFilter" (ngModelChange)="applyStructuredFilters()" placeholder="Estado"></p-select>
+    <p-select [options]="priorityFilterOptions" [(ngModel)]="priorityFilter" (ngModelChange)="applyStructuredFilters()" placeholder="Prioridad"></p-select>
+    <p-select [options]="assigneeFilterOptions" optionLabel="label" optionValue="value" [(ngModel)]="assigneeFilter" (ngModelChange)="applyStructuredFilters()" placeholder="Asignado"></p-select>
   </div>
 
   <div *ngIf="viewMode === 'kanban'" class="kanban-grid">
@@ -80,18 +107,19 @@
   </div>
 
   <div class="text-500 mt-3" *ngIf="viewMode === 'kanban' && !isLoading && filteredTickets.length === 0">
-    No hay tickets visibles para tus grupos/permisos. Crea uno con "Crear ticket" o ejecuta el seed de tickets demo.
+    {{ emptyStateMessage }}
   </div>
 
   <div *ngIf="viewMode === 'table'">
     <p-table [value]="filteredTickets" [paginator]="true" [rows]="8" responsiveLayout="scroll">
       <ng-template pTemplate="header">
         <tr>
-          <th scope="col">ID / Titulo</th>
+          <th scope="col" pSortableColumn="id">ID / Titulo <p-sortIcon field="id"></p-sortIcon></th>
           <th scope="col">Estado</th>
           <th scope="col">Asignado a</th>
-          <th scope="col">Prioridad</th>
-          <th scope="col">Fecha limite</th>
+          <th scope="col" pSortableColumn="priority">Prioridad <p-sortIcon field="priority"></p-sortIcon></th>
+          <th scope="col">Grupo</th>
+          <th scope="col" pSortableColumn="dueDate">Fecha limite <p-sortIcon field="dueDate"></p-sortIcon></th>
           <th scope="col">Acciones</th>
         </tr>
       </ng-template>
@@ -101,11 +129,12 @@
           <td>{{ ticket.status }}</td>
           <td>{{ ticket.assigneeName || 'Sin asignar' }}</td>
           <td>{{ priorityLabel(ticket.priority) }}</td>
+          <td>{{ groupLabel(ticket.groupId) }}</td>
           <td>{{ ticket.dueDate | date: 'shortDate' }}</td>
           <td>
             <button pButton icon="pi pi-eye" class="p-button-rounded p-button-text" (click)="openDetail(ticket)"></button>
             <button
-              *ifHasPermission="$any('ticket:delete')"
+              *ngIf="canDeleteTicket(ticket)"
               pButton
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-text"
@@ -117,7 +146,7 @@
     </p-table>
 
     <div class="text-500 mt-3" *ngIf="!isLoading && filteredTickets.length === 0">
-      No hay tickets visibles para tus grupos/permisos. Crea uno con "Crear ticket" o ejecuta el seed de tickets demo.
+      {{ emptyStateMessage }}
     </div>
   </div>
 </div>
@@ -158,7 +187,7 @@
 
   <ng-template pTemplate="footer">
     <button pButton label="Cancelar" class="p-button-text" (click)="createDialog = false"></button>
-    <button pButton label="Crear" (click)="createTicket()"></button>
+    <button pButton label="Crear" [loading]="isLoading && pendingActionLabel === 'Creando ticket'" [disabled]="isLoading || !ticketDraft.title.trim()" (click)="createTicket()"></button>
   </ng-template>
 </p-dialog>
 
@@ -210,7 +239,7 @@
 
     <div class="comment-row" *ngIf="canComment(ticket)">
       <input id="detailTicketComments" pInputText [(ngModel)]="commentDraft" placeholder="Agregar comentario" />
-      <button pButton label="Comentar" (click)="addComment()"></button>
+      <button pButton label="Comentar" [loading]="isLoading && pendingActionLabel === 'Agregando comentario'" [disabled]="isLoading || !commentDraft.trim()" (click)="addComment()"></button>
     </div>
 
     <label for="detailTicketHistory">Historial de cambios</label>
@@ -223,14 +252,17 @@
 
   <ng-template pTemplate="footer">
     <button pButton label="Cerrar" class="p-button-text" (click)="detailDialog = false"></button>
+    <button pButton label="Mover estado" icon="pi pi-arrow-right-arrow-left" [loading]="isLoading && pendingActionLabel === 'Moviendo estado'" [disabled]="isLoading" (click)="moveSelectedTicket()" *ngIf="selectedTicket && canMoveTicket(selectedTicket)"></button>
     <button
       pButton
       label="Eliminar ticket"
       icon="pi pi-trash"
       class="p-button-danger"
+      [loading]="isLoading && pendingActionLabel === 'Eliminando ticket'"
+      [disabled]="isLoading"
       (click)="deleteTicket(selectedTicket); detailDialog = false"
-      *ngIf="selectedTicket && hasPermission('ticket:delete')"
+      *ngIf="selectedTicket && canDeleteTicket(selectedTicket)"
     ></button>
-    <button pButton label="Guardar cambios" (click)="saveDetail()" *ngIf="selectedTicket && (canEditFields(selectedTicket) || canChangeStatus(selectedTicket))"></button>
+    <button pButton label="Guardar cambios" [loading]="isLoading && pendingActionLabel === 'Guardando cambios'" [disabled]="isLoading" (click)="saveDetail()" *ngIf="selectedTicket && (canEditFields(selectedTicket) || canChangeStatus(selectedTicket))"></button>
   </ng-template>
 </p-dialog>

@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "Practica2 Board Architecture",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Coleccion para probar la arquitectura tipo pizarron con Fastify + API Gateway proxy."
+  },
+  "variable": [
+    { "key": "gatewayUrl", "value": "http://127.0.0.1:3000" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        { "name": "Gateway", "request": { "method": "GET", "url": "{{gatewayUrl}}/health" } }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Permissions",
+          "request": { "method": "GET", "url": "{{gatewayUrl}}/permissions" }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@marher.com\",\n  \"password\": \"$p4$ww0rD1234\"\n}" },
+            "url": "{{gatewayUrl}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Groups",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "url": "{{gatewayUrl}}/groups" } }
+      ]
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "url": "{{gatewayUrl}}/tickets" } },
+        {
+          "name": "Move State",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"Hecho\",\n  \"userId\": \"usr-dev\",\n  \"permissions\": [\"tickets:move\"]\n}" },
+            "url": "{{gatewayUrl}}/tickets/tk-1/status"
+          }
+        }
+      ]
+    }
+  ]
+}

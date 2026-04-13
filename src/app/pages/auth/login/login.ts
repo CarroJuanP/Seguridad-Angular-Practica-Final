@@ -1,3 +1,5 @@
+// Pantalla de inicio de sesion.
+// Usa Reactive Forms para validar credenciales antes de delegar el flujo real a AuthService.
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -29,7 +31,10 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./login.css'],
 })
 export class Login {
+  // Formulario reactivo con reglas minimas para evitar envios vacios o llenos de espacios.
   loginForm: FormGroup;
+  isSubmitting = false;
+  private logoClickCount = 0;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -38,24 +43,28 @@ export class Login {
     private readonly auth: AuthService,
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email, this.notOnlySpacesValidator]],
+      identifier: ['', [Validators.required, this.notOnlySpacesValidator]],
       password: ['', [Validators.required, this.notOnlySpacesValidator]],
     });
   }
 
   get f() {
+    // Alias corto para simplificar las expresiones del template.
     return this.loginForm.controls;
   }
 
   login(): void {
+    // Si el formulario no pasa validaciones locales, ni siquiera intenta autenticarse.
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
     }
 
-    const { email, password } = this.loginForm.value;
+    const { identifier, password } = this.loginForm.value;
+    this.isSubmitting = true;
 
-    this.auth.login(email, password).subscribe(user => {
+    this.auth.login(identifier, password).subscribe(user => {
+      this.isSubmitting = false;
       if (!user) {
         this.messageService.add({
           severity: 'error',
@@ -76,7 +85,20 @@ export class Login {
     });
   }
 
+  onLogoClick(): void {
+    this.logoClickCount += 1;
+    if (this.logoClickCount >= 5) {
+      this.logoClickCount = 0;
+      this.messageService.add({
+        severity: 'info',
+        summary: 'catch u',
+        detail: 'Te cachamos explorando el login.',
+      });
+    }
+  }
+
   private notOnlySpacesValidator(control: AbstractControl) {
+    // Permite texto con espacios internos, pero no cadenas vacias disfrazadas de espacios.
     const value = control.value;
     if (value === null || value === undefined) {
       return null;

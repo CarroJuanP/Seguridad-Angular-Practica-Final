@@ -1,3 +1,5 @@
+// Pantalla administrativa de usuarios.
+// Permite listar, crear, editar, desactivar y asignar permisos por grupo.
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -5,12 +7,12 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
-import { IfHasPermissionDirective } from '../../directives/has-permission';
 import { AuthService } from '../../services/auth.service';
 import { Permissions } from '../../services/permissions';
 import {
@@ -29,18 +31,20 @@ import {
     ButtonModule,
     DialogModule,
     InputTextModule,
+    PasswordModule,
     SelectModule,
     TagModule,
     ToastModule,
-    IfHasPermissionDirective,
   ],
   templateUrl: './user.html',
   styleUrls: ['./user.css'],
   providers: [MessageService],
 })
 export class UserPage implements OnInit {
+  // Politica minima usada cuando se captura o cambia password desde la UI.
   private readonly passwordPolicy = /^(?=.*[!@#$%^&*])\S+$/;
 
+  // Etiquetas heredadas para compatibilidad con algunos bindings del template.
   permissions = { USER_ADD: 'user:add', USER_EDIT: 'user:edit', USER_DELETE: 'user:delete' };
   allPermissions = ALL_PERMISSIONS;
   users: AppUser[] = [];
@@ -49,6 +53,9 @@ export class UserPage implements OnInit {
   isLoading = false;
   selectedGroupId: string | null = null;
   isCurrentUserSuperAdmin = false;
+  canCreateUsers = false;
+  canEditUsers = false;
+  canDeleteUsers = false;
   permissionGroupId: string | null = null;
   expandedUsers: Record<string, boolean> = {};
 
@@ -65,12 +72,23 @@ export class UserPage implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Si la sesion no tiene permiso user:view, se redirige antes de cargar datos costosos.
     const currentUser = this.authService.getCurrentUser();
     this.isCurrentUserSuperAdmin = currentUser?.isSuperAdmin ?? false;
     const session = this.authService.getSession();
     this.selectedGroupId = session?.selectedGroupId ?? currentUser?.groupIds[0] ?? null;
+    const effectivePermissions = session?.permissions ?? [];
+    const allUserPermissions: PermissionKey[] = currentUser
+      ? [...new Set(Object.values(currentUser.permissionsByGroup ?? {}).flat())] as PermissionKey[]
+      : [];
+    const canManageUsers = this.isCurrentUserSuperAdmin || [...effectivePermissions, ...allUserPermissions].some(
+      permission => ['user:view', 'user:view:all', 'user:add', 'user:edit', 'user:delete', 'user:manage'].includes(permission),
+    );
+    this.canCreateUsers = this.hasUserCapability(['user:add', 'user:manage'], effectivePermissions, allUserPermissions);
+    this.canEditUsers = this.hasUserCapability(['user:edit', 'user:manage'], effectivePermissions, allUserPermissions);
+    this.canDeleteUsers = this.hasUserCapability(['user:delete', 'user:manage'], effectivePermissions, allUserPermissions);
 
-    if (!(session?.permissions ?? []).includes('user:view')) {
+    if (!canManageUsers) {
       this.router.navigate(['/home']);
       return;
     }
@@ -96,17 +114,22 @@ export class UserPage implements OnInit {
   }
 
   loadUsers(): void {
+    // Superadmin ve todos; un admin normal ve usuarios del grupo activo.
     this.isLoading = true;
     this.authService.getUsers$().subscribe(users => {
       this.isLoading = false;
       const groupId = this.selectedGroupId;
-      this.users = this.isCurrentUserSuperAdmin
-        ? users
-        : groupId ? users.filter(u => u.groupIds.includes(groupId)) : users;
+      if (this.isCurrentUserSuperAdmin || !groupId) {
+        this.users = users;
+        return;
+      }
+
+      this.users = users.filter(u => u.groupIds.includes(groupId));
     });
   }
 
   openNew(): void {
+    // Prepara un usuario vacio y, si hay grupo activo, lo asigna como contexto inicial.
     const groupId = this.selectedGroupId;
     this.formData = this.emptyUser();
     this.originalPassword = '';
@@ -123,6 +146,7 @@ export class UserPage implements OnInit {
   }
 
   editUser(user: AppUser): void {
+    // structuredClone evita mutar la fila original mientras el dialogo sigue abierto.
     this.formData = structuredClone(user);
     this.originalPassword = user.password ?? '';
     // Avoid showing the current password/hash in UI; only set when user wants to change it.
@@ -146,6 +170,7 @@ export class UserPage implements OnInit {
   }
 
   saveUser(): void {
+    // La validacion aqui es intencionalmente directa porque el formulario usa ngModel y no Reactive Forms.
     if (!this.formData.name.trim() || !this.formData.username.trim() || !this.formData.email.trim()) {
       this.messageService.add({
         severity: 'warn',
@@ -155,11 +180,11 @@ export class UserPage implements OnInit {
       return;
     }
 
-    if (!this.formData.groupIds.length) {
+    if (this.formData.phone && !/^\d{10}$/.test(this.formData.phone)) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Sin grupos',
-        detail: 'Selecciona al menos un grupo para el usuario.',
+        summary: 'Telefono invalido',
+        detail: 'El telefono debe contener exactamente 10 digitos numericos.',
       });
       return;
     }
@@ -188,6 +213,7 @@ export class UserPage implements OnInit {
     }
 
     const userToSave: AppUser = {
+      // En edicion, si no se capturo nueva password, se conserva la original.
       ...this.formData,
       password: this.isNew
         ? this.formData.password.trim()
@@ -227,6 +253,7 @@ export class UserPage implements OnInit {
   }
 
   togglePermission(permission: PermissionKey): void {
+    // Activa o desactiva permisos dentro del grupo actualmente seleccionado en el combo.
     const groupId = this.permissionGroupId;
     if (!groupId) {
       return;
@@ -261,6 +288,7 @@ export class UserPage implements OnInit {
   }
 
   onGroupsSelectionChange(groupIds: string[]): void {
+    // Mantiene sincronizados groupIds y permissionsByGroup para que no existan permisos flotantes.
     const uniqueGroupIds = [...new Set(groupIds)];
     const nextPermissions: Record<string, PermissionKey[]> = {};
 
@@ -276,6 +304,27 @@ export class UserPage implements OnInit {
     }
   }
 
+  onPhoneInput(rawValue: string): void {
+    this.formData.phone = rawValue.replaceAll(/\D+/g, '').slice(0, 10);
+  }
+
+  onPhoneKeydown(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    if (!/^\d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  onPhonePaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pastedText = event.clipboardData?.getData('text') ?? '';
+    this.onPhoneInput(`${this.formData.phone}${pastedText}`);
+  }
+
   selectedGroupLabels(): string {
     if (!this.formData.groupIds.length) {
       return 'Sin grupos asignados';
@@ -287,6 +336,7 @@ export class UserPage implements OnInit {
   }
 
   userPermissionsByGroup(user: AppUser): Array<{ groupName: string; permissions: PermissionKey[] }> {
+    // Modelo ya preparado para la fila expandible de la tabla.
     return this.displayGroupIds(user).map(groupId => ({
       groupName: this.groupNameMap[groupId] ?? groupId,
       permissions: user.permissionsByGroup[groupId] ?? [],
@@ -294,7 +344,12 @@ export class UserPage implements OnInit {
   }
 
   userGroupLabels(user: AppUser): string {
-    return this.displayGroupIds(user)
+    const groupIds = this.displayGroupIds(user);
+    if (!groupIds.length) {
+      return 'Sin grupos asignados';
+    }
+
+    return groupIds
       .map(groupId => this.groupNameMap[groupId] ?? groupId)
       .join(', ');
   }
@@ -307,6 +362,7 @@ export class UserPage implements OnInit {
   }
 
   private emptyUser(): AppUser {
+    // Fabrica usada por openNew para comenzar con un objeto seguro y completo.
     return {
       id: '',
       name: '',
@@ -323,8 +379,22 @@ export class UserPage implements OnInit {
   }
 
   private displayGroupIds(user: AppUser): string[] {
+    // Combina membresias y grupos con permisos para mostrar una vista consistente aunque haya desajustes parciales.
     const membershipGroupIds = user.groupIds ?? [];
     const permissionGroupIds = Object.keys(user.permissionsByGroup ?? {});
     return [...new Set([...membershipGroupIds, ...permissionGroupIds])];
+  }
+
+  private hasUserCapability(
+    requiredPermissions: PermissionKey[],
+    effectivePermissions: PermissionKey[],
+    allUserPermissions: PermissionKey[],
+  ): boolean {
+    if (this.isCurrentUserSuperAdmin) {
+      return true;
+    }
+
+    const availablePermissions = new Set<PermissionKey>([...effectivePermissions, ...allUserPermissions]);
+    return requiredPermissions.some(permission => availablePermissions.has(permission));
   }
 }

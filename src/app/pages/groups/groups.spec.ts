@@ -1,3 +1,4 @@
+// Smoke test de la pagina de grupos.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Groups } from './groups';

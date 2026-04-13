@@ -1,7 +1,32 @@
+/* Tarjetas, metricas y listas rapidas del dashboard Home. */
 .home-container {
   display: grid;
   gap: 1rem;
   padding: 1rem;
+  background: #f54927;
+  min-height: calc(100vh - 2rem);
+}
+
+.selector-card {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.selector-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.selector-actions {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.selector-actions-compact {
+  min-width: 280px;
 }
 
 .welcome-container {
@@ -51,6 +76,27 @@
   gap: 0.8rem;
 }
 
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.8rem;
+}
+
+.ticket-access-card {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+.ticket-access-copy {
+  display: grid;
+  gap: 0.35rem;
+  color: #fff;
+}
+
+.ticket-access-empty {
+  color: #475569;
+  font-weight: 600;
+}
+
 .stat {
   font-size: 1.8rem;
   font-weight: 700;
@@ -78,7 +124,27 @@
   font-weight: 600;
 }
 
+.groups-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.group-pill {
+  border: 2px solid #d7e4f2;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  background: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
+  .selector-grid,
+  .selector-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
   .hero-content,
   .card-head {
     flex-direction: column;

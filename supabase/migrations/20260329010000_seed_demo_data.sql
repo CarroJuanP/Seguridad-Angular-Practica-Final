@@ -3,6 +3,8 @@
 -- Must match UUIDs in src/app/models/permissions.model.ts
 -- =============================================================================
 
+-- Este seed rellena catalogos y datos demo para que la app pueda operar sin captura manual inicial.
+
 -- ---------------------------------------------------------------------------
 -- 0) Compatibility fixes for older schemas
 -- ---------------------------------------------------------------------------

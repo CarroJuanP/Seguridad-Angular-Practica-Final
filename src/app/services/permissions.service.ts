@@ -1,10 +1,13 @@
+// Servicio pequeno pero critico.
+// Traduce el estado de sesion actual a un Set reactivo de permisos que consumen guards y directivas.
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthService } from './auth.service';
-import { PermissionKey } from '../models/permissions.model';
+import { ALL_PERMISSIONS, PermissionKey } from '../models/permissions.model';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {
+  // Set se usa para consultas O(1) al verificar permisos puntuales.
   private readonly permissionsSubject = new BehaviorSubject<Set<PermissionKey>>(new Set());
   readonly permissions$ = this.permissionsSubject.asObservable();
 
@@ -20,11 +23,14 @@ export class PermissionsService {
     });
   }
 
-  hasPermission(permission: PermissionKey): boolean {
-    return this.permissionsSubject.value.has(permission);
+  hasPermission(permission: string): boolean {
+    // Verificacion atomica usada por guards, sidebar y directivas estructurales.
+    const normalizedPermission = this.normalizePermission(permission);
+    return normalizedPermission ? this.permissionsSubject.value.has(normalizedPermission) : false;
   }
 
-  hasAnyPermission(permissions: PermissionKey[]): boolean {
+  hasAnyPermission(permissions: string[]): boolean {
+    // Atajo para pantallas que aceptan cualquiera de varios permisos equivalentes.
     return permissions.some(permission => this.hasPermission(permission));
   }
 
@@ -33,11 +39,25 @@ export class PermissionsService {
   }
 
   clearPermissions(): void {
+    // Se usa al cerrar sesion para vaciar rapidamente el estado en memoria.
     this.permissionsSubject.next(new Set());
   }
 
   setSessionPermissions(permissions: PermissionKey[]): void {
+    // No modifica el subject directamente: la fuente de verdad sigue siendo la sesion.
     this.authService.updateSession({ permissions });
+  }
+
+  refreshPermissionsForGroup(groupId: string): void {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser || !groupId) {
+      this.clearPermissions();
+      return;
+    }
+
+    const permissions = currentUser.permissionsByGroup[groupId] ?? [];
+    this.authService.updateSession({ selectedGroupId: groupId, permissions });
+    this.permissionsSubject.next(new Set(permissions));
   }
 
   getCurrentPermissions(): PermissionKey[] {
@@ -45,14 +65,17 @@ export class PermissionsService {
   }
 
   private syncFromSession(): void {
+    // 1. Recupera sesion y usuario actuales.
     const session = this.authService.getSession();
     const currentUser = this.authService.getCurrentUser();
 
     if (!currentUser) {
+      // Sin usuario no debe quedar ningun permiso activo en memoria.
       this.permissionsSubject.next(new Set());
       return;
     }
 
+    // Primer grupo del usuario como fallback si la sesion aun no eligio uno.
     const fallbackGroupId = currentUser.groupIds[0] ?? null;
 
     if (session && !session.selectedGroupId && fallbackGroupId) {
@@ -90,5 +113,35 @@ export class PermissionsService {
     }
 
     this.permissionsSubject.next(new Set(groupPermissions));
+  }
+
+  private normalizePermission(permission: string): PermissionKey | null {
+    const aliases: Record<string, PermissionKey> = {
+      'groups:view': 'group:view',
+      'groups:add': 'group:add',
+      'groups:edit': 'group:edit',
+      'groups:delete': 'group:delete',
+      'groups:manage': 'group:manage',
+      'users:view': 'user:view',
+      'users:add': 'user:add',
+      'users:edit': 'user:edit',
+      'users:delete': 'user:delete',
+      'users:manage': 'user:manage',
+      'tickets:view': 'ticket:view',
+      'tickets:add': 'ticket:add',
+      'tickets:edit': 'ticket:edit',
+      'tickets:delete': 'ticket:delete',
+      'tickets:move': 'ticket:edit:state',
+      'tickets:comment': 'ticket:edit:comment',
+      'tickets:assign': 'ticket:edit:assign',
+      'tickets:manage': 'ticket:manage',
+    };
+
+    const normalized = aliases[permission.trim()] ?? permission.trim();
+    return this.isPermissionKey(normalized) ? normalized : null;
+  }
+
+  private isPermissionKey(value: string): value is PermissionKey {
+    return (ALL_PERMISSIONS as readonly string[]).includes(value);
   }
 }

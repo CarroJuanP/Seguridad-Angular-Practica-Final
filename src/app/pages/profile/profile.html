@@ -1,3 +1,4 @@
+<!-- Perfil propio del usuario y resumen de carga de trabajo. -->
 <div class="profile-container">
   <p-toast></p-toast>
 
@@ -57,10 +58,14 @@
           <input
             id="profilePhone"
             pInputText
-            [(ngModel)]="editData.telefono"
+            [ngModel]="editData.telefono"
+            (ngModelChange)="onPhoneInput($event)"
+            inputmode="numeric"
+            maxlength="10"
             [disabled]="!isEditMode"
             class="form-input"
           />
+          <small class="text-500">Solo numeros, exactamente 10 digitos.</small>
         </div>
       </div>
 
@@ -89,11 +94,52 @@
       </div>
 
       <div *ngIf="isEditMode" class="action-buttons">
+        <div class="security-panel">
+          <h3 class="m-0">Cambiar password</h3>
+          <p class="mt-2 mb-3 text-600">Opcional. Activalo solo si quieres reemplazar tu password actual.</p>
+
+          <label class="password-toggle" for="profileEnablePasswordChange">
+            <input
+              id="profileEnablePasswordChange"
+              type="checkbox"
+              [ngModel]="changePasswordEnabled"
+              (ngModelChange)="onChangePasswordToggle($event)"
+            />
+            <span>Quiero cambiar mi password</span>
+          </label>
+
+          <div *ngIf="changePasswordEnabled" class="form-row mt-3">
+            <div class="form-group">
+              <label for="profileNewPassword">Nueva password</label>
+              <p-password
+                inputId="profileNewPassword"
+                [(ngModel)]="newPassword"
+                [feedback]="false"
+                toggleMask="true"
+                styleClass="form-input"
+              ></p-password>
+            </div>
+            <div class="form-group">
+              <label for="profileConfirmNewPassword">Confirmar password</label>
+              <p-password
+                inputId="profileConfirmNewPassword"
+                [(ngModel)]="confirmNewPassword"
+                [feedback]="false"
+                toggleMask="true"
+                styleClass="form-input"
+              ></p-password>
+            </div>
+          </div>
+          <small *ngIf="changePasswordEnabled" class="text-500">Usa minimo 10 caracteres, al menos un simbolo (!@#$%^&*) y sin espacios.</small>
+        </div>
+
         <button
           pButton
           type="button"
           label="Guardar"
           icon="pi pi-check"
+          [loading]="isSaving"
+          [disabled]="isSaving"
           (click)="saveProfile()"
           class="p-button-primary"
         ></button>
@@ -102,6 +148,7 @@
           type="button"
           label="Cancelar"
           icon="pi pi-times"
+          [disabled]="isSaving"
           (click)="cancel()"
           class="p-button-secondary"
           style="margin-left: 0.5rem"

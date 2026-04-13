@@ -1,3 +1,4 @@
+/* Estilos especificos de la tarjeta de login. */
 /** Wrapper principal **/
 .login-wrapper {
   min-height: 100vh;
@@ -43,6 +44,14 @@
   color: var(--accent-color);
   display: block;
   margin-bottom: 0.5rem;
+}
+
+.logo-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
 }
 
 .card-header h2 {

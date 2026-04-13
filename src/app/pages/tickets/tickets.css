@@ -1,7 +1,45 @@
+/* Estilos del tablero kanban, filtros y dialogos de tickets. */
 .ticket-page {
   display: grid;
   gap: 1rem;
   padding: 1rem;
+}
+
+.context-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.context-card {
+  min-width: 12rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid #d7e4f2;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.05);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.context-label {
+  font-size: 0.78rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.loading-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: fit-content;
+  padding: 0.7rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #0d3b66;
+  font-weight: 600;
 }
 
 .head-row {
@@ -15,6 +53,14 @@
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.quick-filters-secondary {
+  align-items: center;
+}
+
+.quick-filters-secondary :is(.p-select, .p-component) {
+  min-width: 12rem;
 }
 
 .view-rocker {
@@ -39,6 +85,12 @@
   cursor: pointer;
   user-select: none;
   transition: color 0.2s ease;
+}
+
+.rocker-label-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
 }
 
 .rocker-label.active {
@@ -171,9 +223,17 @@
 }
 
 @media (max-width: 768px) {
+  .context-strip {
+    flex-direction: column;
+  }
+
   .head-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.7rem;
+  }
+
+  .comment-row {
+    flex-direction: column;
   }
 }

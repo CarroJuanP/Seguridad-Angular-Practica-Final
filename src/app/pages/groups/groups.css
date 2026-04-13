@@ -1,5 +1,23 @@
+/* Estilos de la tabla de grupos y dialogos asociados. */
 .groups-container {
   padding: 1rem;
+}
+
+.groups-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.groups-summary-pill {
+  min-width: 7.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0d3b66, #1f4e79);
+  color: #fff;
+  display: grid;
+  text-align: center;
 }
 
 .llm-pill {
@@ -26,6 +44,12 @@
   gap: 0.6rem;
 }
 
+.profile-preview {
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
+}
+
 .members-grid {
   display: grid;
   gap: 0.6rem;
@@ -38,7 +62,85 @@
   gap: 0.6rem;
 }
 
+.empty-panel {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: #475569;
+}
+
+.empty-panel-compact {
+  padding: 1rem 0.5rem;
+}
+
+.empty-icon {
+  font-size: 1.4rem;
+  color: #0d3b66;
+  margin-bottom: 0.5rem;
+}
+
+.empty-title {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.empty-copy {
+  margin-top: 0.35rem;
+}
+
+.permission-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.member-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.member-status-pill-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.permission-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #1d4f91;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.permission-editor {
+  display: grid;
+  gap: 1rem;
+}
+
+.permission-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.permission-chip {
+  border-radius: 999px;
+}
+
 @media (max-width: 768px) {
+  .groups-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .member-add-row {
     grid-template-columns: 1fr;
   }

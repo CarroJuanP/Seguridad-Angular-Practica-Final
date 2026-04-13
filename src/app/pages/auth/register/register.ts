@@ -1,3 +1,5 @@
+// Pantalla de registro con stepper.
+// Divide la captura en pasos para mezclar validaciones de datos personales y credenciales.
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, AbstractControlOptions } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -37,8 +39,10 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class Register {
 
-  activeStep: number = 0;
+  // Paso actual del stepper PrimeNG.
+  activeStep: number = 1;
   registerForm: FormGroup;
+  // Bandera visual para bloquear acciones mientras se completa el alta.
   isLoading = false;
 
   constructor(
@@ -77,6 +81,7 @@ export class Register {
   }
 
   esMayorDeEdad(): boolean {
+    // Calcula la edad exacta para impedir registros de menores.
     const fecha = this.registerForm.get('fechaNacimiento')?.value;
     if (!fecha) return false;
 
@@ -102,10 +107,38 @@ export class Register {
 
   // accesores rápidos
   get f() {
+    // Alias corto de controles para usar en la plantilla.
     return this.registerForm.controls;
   }
 
+  get canAccessCredentialsStep(): boolean {
+    return Boolean(
+      this.f['nombreCompleto'].valid &&
+      this.f['fechaNacimiento'].valid &&
+      this.f['direccion'].valid &&
+      this.f['telefono'].valid &&
+      this.esMayorDeEdad(),
+    );
+  }
+
+  get canAccessConfirmationStep(): boolean {
+    return Boolean(
+      this.canAccessCredentialsStep &&
+      this.f['usuario'].valid &&
+      this.f['email'].valid &&
+      this.f['password'].valid &&
+      this.f['confirmPassword'].valid &&
+      !this.registerForm.hasError('notMatching'),
+    );
+  }
+
+  onPhoneInput(rawValue: string): void {
+    const sanitizedPhone = String(rawValue ?? '').replaceAll(/\D/g, '').slice(0, 10);
+    this.registerForm.patchValue({ telefono: sanitizedPhone }, { emitEvent: false });
+  }
+
   registrar(activateCallback: (step: number) => void): void {
+    // Solo continua si el formulario esta valido y la edad minima se cumple.
     if (this.registerForm.invalid || !this.esMayorDeEdad()) {
       this.registerForm.markAllAsTouched();
       this.messageService.add({ severity: 'error', summary: 'Formulario inválido', detail: 'Revise los campos marcados' });
@@ -127,7 +160,7 @@ export class Register {
       : String(fechaNacimiento ?? '');
 
     this.isLoading = true;
-    this.auth.registerInSupabase({
+    this.auth.registerUser({
       email,
       password,
       name: nombreCompleto,
@@ -141,7 +174,7 @@ export class Register {
         this.messageService.add({
           severity: 'error',
           summary: 'Error al registrar',
-          detail: result.message ?? 'No se pudo guardar el usuario en Supabase.',
+          detail: result.message ?? 'No se pudo guardar el usuario mediante el API Gateway.',
         });
         return;
       }
@@ -153,12 +186,18 @@ export class Register {
           this.messageService.add({
             severity: 'success',
             summary: '¡Bienvenido!',
-            detail: 'Cuenta creada en Supabase e ingresado correctamente.',
+            detail: 'Cuenta creada e ingresado correctamente.',
           });
           setTimeout(() => this.router.navigate([user.isSuperAdmin ? '/groups' : '/home']), 800);
         } else {
-          // Registro OK pero login falló (raro): ir al paso 3 para que entren manualmente
+          // Registro OK pero login automático no quedó listo: llevar a login manualmente.
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Cuenta creada',
+            detail: 'Tu usuario ya fue registrado. Inicia sesion manualmente para continuar.',
+          });
           activateCallback(3);
+          setTimeout(() => this.router.navigate(['/login']), 1200);
         }
       });
     });

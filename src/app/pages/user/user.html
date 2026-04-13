@@ -1,12 +1,13 @@
+<!-- Tabla administrativa de usuarios y dialogo de edicion por grupos/permisos. -->
 <p-toast></p-toast>
 
 <div class="card fade-in">
-  <h2 class="mb-3">Gestion de usuarios</h2>
+  <h1 class="mb-3">Gestion de usuarios</h1>
   <p class="mb-4">Administracion de usuarios del grupo seleccionado.</p>
 
   <div class="flex gap-2 mb-3">
     <button
-      *ifHasPermission="'user:add'"
+      *ngIf="canCreateUsers"
       pButton
       label="Nuevo usuario"
       icon="pi pi-plus"
@@ -52,7 +53,7 @@
         <td>
           <div class="flex gap-2">
             <button
-              *ifHasPermission="'user:edit'"
+              *ngIf="canEditUsers"
               pButton
               icon="pi pi-pencil"
               class="p-button-rounded p-button-warning p-button-text"
@@ -60,7 +61,7 @@
               (click)="editUser(user)"
             ></button>
             <button
-              *ifHasPermission="'user:delete'"
+              *ngIf="canDeleteUsers"
               pButton
               icon="pi pi-trash"
               class="p-button-rounded p-button-danger p-button-text"
@@ -130,18 +131,29 @@
 
         <div class="field-block">
           <label for="userPassword">{{ isNew ? 'Password' : 'Nueva password (opcional)' }}</label>
-          <input
-            id="userPassword"
-            pInputText
-            type="password"
+          <p-password
+            inputId="userPassword"
             [(ngModel)]="formData.password"
+            [feedback]="false"
+            toggleMask="true"
             [placeholder]="isNew ? 'Temporal@1234' : 'Deja vacio para conservar la actual'"
-          />
+          ></p-password>
         </div>
 
         <div class="field-block">
           <label for="userPhone">Telefono</label>
-          <input id="userPhone" pInputText [(ngModel)]="formData.phone" placeholder="5551234567" />
+          <input
+            id="userPhone"
+            pInputText
+            [(ngModel)]="formData.phone"
+            (input)="onPhoneInput($any($event.target).value)"
+            (keydown)="onPhoneKeydown($event)"
+            (paste)="onPhonePaste($event)"
+            inputmode="numeric"
+            maxlength="10"
+            placeholder="5551234567"
+          />
+          <small class="text-500">Solo numeros, exactamente 10 digitos.</small>
         </div>
 
         <div class="field-block">
@@ -159,7 +171,7 @@
     <section class="user-dialog-card">
       <div class="section-heading">
         <h3>Grupos visibles</h3>
-        <p>Selecciona uno o varios grupos a los que el usuario podra entrar.</p>
+        <p>Selecciona cero, uno o varios grupos a los que el usuario podra entrar.</p>
       </div>
 
       <div class="group-selector-grid">
@@ -184,6 +196,8 @@
         <span>Grupos seleccionados</span>
         <strong>{{ selectedGroupLabels() }}</strong>
       </div>
+
+      <small class="text-500">Puedes dejar al usuario sin grupos asignados si todavia no debe entrar a ninguno.</small>
     </section>
 
     <section class="user-dialog-card">

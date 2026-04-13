@@ -1,3 +1,4 @@
+// Smoke test del perfil del usuario.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Profile } from './profile';

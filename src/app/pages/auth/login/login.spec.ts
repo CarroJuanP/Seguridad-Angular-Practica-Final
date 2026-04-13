@@ -1,3 +1,4 @@
+// Smoke test del componente de login.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Login } from './login';

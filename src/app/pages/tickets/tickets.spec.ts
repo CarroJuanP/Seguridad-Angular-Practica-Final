@@ -1,9 +1,6 @@
+// Smoke test del modulo visual de tickets.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Tickets } from './tickets';
-import { CommonModule } from '@angular/common';
-import { ButtonModule } from 'primeng/button';
-
-
 
 describe('Ticket', () => {
   let component: Tickets;

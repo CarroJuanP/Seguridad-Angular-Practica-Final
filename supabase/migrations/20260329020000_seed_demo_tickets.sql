@@ -3,6 +3,8 @@
 -- Creates sample tickets for the 3 demo groups if they do not exist
 -- =============================================================================
 
+-- Inserta tickets de muestra e historial inicial para poblar el tablero al arrancar.
+
 with refs as (
   select
     (select id from public.groups where name = 'ERP Finanzas' limit 1) as g_erp,

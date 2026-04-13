@@ -1,8 +1,21 @@
+<!-- Layout comun: sidebar fija a la izquierda y contenido dinamico a la derecha. -->
 <div class="layout-container">
   <app-sidebar></app-sidebar>
 
   <div class="content">
-    <!-- puede agregarse header/logo aquí en el futuro -->
+    <div class="content-topbar">
+      <div>
+        <div class="content-eyebrow">ERP · Panel interno</div>
+        <h1 class="content-title">{{ currentPageTitle }}</h1>
+        <p class="content-subtitle">{{ currentPageSubtitle }}</p>
+      </div>
+
+      <div class="content-user-pill">
+        <i class="pi pi-user"></i>
+        <span>{{ currentUserLabel }}</span>
+      </div>
+    </div>
+
     <router-outlet></router-outlet>
   </div>
 </div>

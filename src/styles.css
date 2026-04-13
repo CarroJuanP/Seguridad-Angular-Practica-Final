@@ -1,6 +1,8 @@
+/* Hoja global de estilos compartidos por toda la app. */
 @import 'primeicons/primeicons.css';
 
 :root {
+  /* Variables de color y apariencia reutilizadas en componentes y paginas. */
   --primary-color: #0d3b66;
   --secondary-color: #1f4e79;
   --accent-color: #f97316;
@@ -42,6 +44,7 @@ p-card,
 }
 
 /* Register page polished, high-contrast theme */
+/* Ajustes globales especificos para la pagina de registro y sus widgets PrimeNG. */
 app-register .register-wrapper {
   min-height: 100vh;
   display: flex;
@@ -100,8 +103,8 @@ app-register .register-card input::placeholder {
 }
 
 app-register .register-card .p-button.p-button-primary {
-  background: linear-gradient(90deg, #0ea5e9, #0284c7) !important;
-  border-color: #0284c7 !important;
+  background: linear-gradient(90deg, #0369a1, #075985) !important;
+  border-color: #075985 !important;
   color: #ffffff !important;
 }
 
@@ -118,8 +121,8 @@ app-register .register-card .p-button.p-button-secondary:hover {
 
 app-register .register-card .p-button:disabled,
 app-register .register-card .p-button.p-disabled {
-  background: #94a3b8 !important;
-  border-color: #94a3b8 !important;
+  background: #64748b !important;
+  border-color: #64748b !important;
   color: #ffffff !important;
   opacity: 1 !important;
 }

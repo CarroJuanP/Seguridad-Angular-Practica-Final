@@ -1,21 +1,22 @@
+<!-- Flujo visual de registro por pasos. -->
 <p-toast position="top-center"></p-toast>
 <div class="register-wrapper">
   <div class="register-card">
     <div class="card-header">
       <i class="pi pi-user-plus header-icon"></i>
-      <h2>Crear Cuenta</h2>
+      <h1>Crear Cuenta</h1>
       <p class="header-subtitle">Completa tus datos para registrarte</p>
     </div>
     <p-divider></p-divider>
 
     <form [formGroup]="registerForm">
-      <p-stepper [(value)]="activeStep" class="stepper-container">
+      <p-stepper [(value)]="activeStep" [linear]="true" class="stepper-container">
 
         <!-- ICONOS -->
         <p-step-list>
           <p-step [value]="1" label="Datos Personales"></p-step>
-          <p-step [value]="2" label="Credenciales"></p-step>
-          <p-step [value]="3" label="Confirmación"></p-step>
+          <p-step [value]="2" label="Credenciales" [disabled]="!canAccessCredentialsStep"></p-step>
+          <p-step [value]="3" label="Confirmación" [disabled]="!canAccessConfirmationStep"></p-step>
         </p-step-list>
 
         <p-step-panels>
@@ -48,7 +49,16 @@
 
                 <div class="field-group">
                   <label class="field-label" for="registerPhone">Telefono</label>
-                  <input id="registerPhone" pInputText formControlName="telefono" class="field-input" placeholder="3001234567" maxlength="10"/>
+                  <input
+                    id="registerPhone"
+                    pInputText
+                    formControlName="telefono"
+                    (input)="onPhoneInput($any($event.target).value)"
+                    class="field-input"
+                    placeholder="3001234567"
+                    inputmode="numeric"
+                    maxlength="10"
+                  />
                   <small *ngIf="f['telefono'].hasError('required') && f['telefono'].touched" class="p-error error-text">El teléfono es obligatorio.</small>
                   <small *ngIf="f['telefono'].hasError('pattern') && f['telefono'].touched" class="p-error error-text">El teléfono debe contener exactamente 10 dígitos numéricos.</small>
                 </div>
@@ -63,7 +73,7 @@
                     label="Continuar"
                     icon="pi pi-arrow-right"
                     iconPos="right"
-                    [disabled]="f['nombreCompleto'].invalid || f['fechaNacimiento'].invalid || f['direccion'].invalid || f['telefono'].invalid || !esMayorDeEdad()"
+                    [disabled]="!canAccessCredentialsStep"
                     (onClick)="activateCallback(2)"
                     class="btn-full">
                   </p-button>
@@ -134,7 +144,7 @@
                     icon="pi pi-check"
                     iconPos="right"
                     [loading]="isLoading"
-                    [disabled]="registerForm.invalid || registerForm.hasError('notMatching') || !esMayorDeEdad() || isLoading"
+                    [disabled]="!canAccessConfirmationStep || isLoading"
                     (onClick)="registrar(activateCallback)"
                     class="btn-full">
                   </p-button>

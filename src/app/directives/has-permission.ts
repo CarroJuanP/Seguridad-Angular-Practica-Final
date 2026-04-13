@@ -1,13 +1,16 @@
+// Directiva estructural tipo *ngIf, pero gobernada por permisos.
+// Su responsabilidad es agregar o quitar fragmentos del DOM segun el estado actual del PermissionsService.
 import { Directive, Input, OnDestroy, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
 import { PermissionsService } from '../services/permissions.service';
 import { Subject, takeUntil } from 'rxjs';
 import { PermissionKey } from '../models/permissions.model';
 
 @Directive({
-  selector: '[ifHasPermission]',
+  selector: '[ifHasPermission],[appHasPermission]',
   standalone: true,
 })
 export class IfHasPermissionDirective implements OnInit, OnDestroy {
+  // Guarda el permiso requerido para reevaluarlo cada vez que cambia la sesion/permisos.
   private requiredPermission: PermissionKey | null = null;
   private readonly destroy$ = new Subject<void>();
   private hasView = false;
@@ -19,8 +22,15 @@ export class IfHasPermissionDirective implements OnInit, OnDestroy {
   ) {}
 
   @Input()
-  set ifHasPermission(permission: PermissionKey) {
-    this.requiredPermission = permission;
+  set ifHasPermission(permission: string) {
+    // Cada cambio de input dispara una reevaluacion inmediata del bloque asociado.
+    this.requiredPermission = permission as PermissionKey;
+    this.updateView();
+  }
+
+  @Input()
+  set appHasPermission(permission: string) {
+    this.requiredPermission = permission as PermissionKey;
     this.updateView();
   }
 
@@ -43,6 +53,7 @@ export class IfHasPermissionDirective implements OnInit, OnDestroy {
   }
 
   private updateView() {
+    // Solo renderiza la vista embebida cuando corresponde y evita recrearla si ya existe.
     const hasPermission = this.requiredPermission &&
                          this.permissionsService.hasPermission(this.requiredPermission);
 

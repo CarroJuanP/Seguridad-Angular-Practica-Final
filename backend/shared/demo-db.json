@@ -1,0 +1,148 @@
+{
+  "groups": [
+    {
+      "id": "grp-erp",
+      "name": "ERP Finanzas",
+      "description": "Workspace para reportes, facturacion y flujo financiero.",
+      "llmModel": "Perfil Financiero",
+      "llmColor": "#F54927"
+    },
+    {
+      "id": "grp-support",
+      "name": "Mesa de Soporte",
+      "description": "Workspace operativo para incidencias y soporte.",
+      "llmModel": "Perfil Operativo",
+      "llmColor": "#0d3b66"
+    },
+    {
+      "id": "grp-bi",
+      "name": "BI Analitica",
+      "description": "Workspace para tableros y analitica.",
+      "llmModel": "Perfil Analitico",
+      "llmColor": "#2a9d8f"
+    }
+  ],
+  "users": [
+    {
+      "id": "usr-admin",
+      "name": "Admin Marher",
+      "username": "admin",
+      "email": "admin@marher.com",
+      "password": "$p4$ww0rD1234",
+      "phone": "5551234567",
+      "birthDate": "1990-01-01",
+      "address": "Queretaro",
+      "isSuperAdmin": true,
+      "groupIds": ["grp-erp", "grp-support", "grp-bi"],
+      "permissionsByGroup": {
+        "grp-erp": ["group:view", "group:add", "group:edit", "group:delete", "group:add:member", "group:remove:member", "group:manage", "user:view", "user:add", "user:edit", "user:edit:profile", "user:delete", "user:assign", "user:view:all", "user:edit:permissions", "user:deactivate", "user:activate", "user:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:edit:priority", "ticket:edit:deadline", "ticket:edit:assign", "ticket:manage"],
+        "grp-support": ["group:view", "group:add", "group:edit", "group:delete", "group:add:member", "group:remove:member", "group:manage", "user:view", "user:add", "user:edit", "user:edit:profile", "user:delete", "user:assign", "user:view:all", "user:edit:permissions", "user:deactivate", "user:activate", "user:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:edit:priority", "ticket:edit:deadline", "ticket:edit:assign", "ticket:manage"],
+        "grp-bi": ["group:view", "group:add", "group:edit", "group:delete", "group:add:member", "group:remove:member", "group:manage", "user:view", "user:add", "user:edit", "user:edit:profile", "user:delete", "user:assign", "user:view:all", "user:edit:permissions", "user:deactivate", "user:activate", "user:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:edit:priority", "ticket:edit:deadline", "ticket:edit:assign", "ticket:manage"]
+      }
+    },
+    {
+      "id": "usr-pm",
+      "name": "Project Manager",
+      "username": "pm",
+      "email": "pm@marher.com",
+      "password": "$p4$ww0rD1234",
+      "phone": "5551234501",
+      "birthDate": "1991-02-14",
+      "address": "Celaya",
+      "isSuperAdmin": false,
+      "groupIds": ["grp-erp", "grp-support", "grp-bi"],
+      "permissionsByGroup": {
+        "grp-erp": ["user:view", "user:edit:profile", "group:view", "group:add", "group:edit", "group:delete", "group:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:manage"],
+        "grp-support": ["user:view", "user:edit:profile", "group:view", "group:add", "group:edit", "group:delete", "group:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:manage"],
+        "grp-bi": ["user:view", "user:edit:profile", "group:view", "group:add", "group:edit", "group:delete", "group:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:manage"]
+      }
+    },
+    {
+      "id": "usr-dev",
+      "name": "Developer",
+      "username": "dev",
+      "email": "dev@marher.com",
+      "password": "$p4$ww0rD1234",
+      "phone": "5551234502",
+      "birthDate": "1995-03-20",
+      "address": "Irapuato",
+      "isSuperAdmin": false,
+      "groupIds": ["grp-erp", "grp-bi"],
+      "permissionsByGroup": {
+        "grp-erp": ["user:view", "user:edit:profile", "group:view", "ticket:view", "ticket:add", "ticket:edit", "ticket:edit:state", "ticket:edit:comment"],
+        "grp-bi": ["user:view", "user:edit:profile", "group:view", "ticket:view", "ticket:add", "ticket:edit", "ticket:edit:state", "ticket:edit:comment"]
+      }
+    },
+    {
+      "id": "usr-support",
+      "name": "Support",
+      "username": "support",
+      "email": "support@marher.com",
+      "password": "$p4$ww0rD1234",
+      "phone": "5551234503",
+      "birthDate": "1994-05-10",
+      "address": "Salamanca",
+      "isSuperAdmin": false,
+      "groupIds": ["grp-support"],
+      "permissionsByGroup": {
+        "grp-support": ["user:view", "user:edit:profile", "group:view", "ticket:view", "ticket:add", "ticket:edit:comment"]
+      }
+    }
+  ],
+  "tickets": [
+    {
+      "id": "tk-1",
+      "groupId": "grp-erp",
+      "title": "Validar login de usuarios remotos",
+      "description": "Revisar intermitencias de autenticacion en clientes externos.",
+      "status": "Pendiente",
+      "assigneeId": "usr-dev",
+      "assigneeName": "Developer",
+      "createdById": "usr-admin",
+      "createdByName": "Admin Marher",
+      "priority": "Alta",
+      "createdAt": "2026-04-01T10:00:00.000Z",
+      "dueDate": "2026-04-20",
+      "comments": [
+        {
+          "id": "c-1",
+          "authorId": "usr-admin",
+          "authorName": "Admin Marher",
+          "message": "Validar logs antes de cambiar configuracion.",
+          "createdAt": "2026-04-01T10:05:00.000Z"
+        }
+      ],
+      "history": [
+        {
+          "id": "h-1",
+          "at": "2026-04-01T10:00:00.000Z",
+          "actorName": "Admin Marher",
+          "action": "Ticket creado"
+        }
+      ]
+    },
+    {
+      "id": "tk-2",
+      "groupId": "grp-support",
+      "title": "Revisar soporte operativo",
+      "description": "Consolidar incidencias abiertas de la semana.",
+      "status": "En progreso",
+      "assigneeId": "usr-support",
+      "assigneeName": "Support",
+      "createdById": "usr-pm",
+      "createdByName": "Project Manager",
+      "priority": "Media",
+      "createdAt": "2026-04-03T09:30:00.000Z",
+      "dueDate": "2026-04-22",
+      "comments": [],
+      "history": [
+        {
+          "id": "h-2",
+          "at": "2026-04-03T09:30:00.000Z",
+          "actorName": "Project Manager",
+          "action": "Ticket creado"
+        }
+      ]
+    }
+  ]
+}

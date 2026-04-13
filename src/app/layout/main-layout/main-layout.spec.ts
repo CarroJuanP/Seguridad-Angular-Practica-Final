@@ -1,3 +1,4 @@
+// Prueba minima de creacion del layout privado.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MainLayout } from './main-layout';
 

@@ -1,3 +1,4 @@
+// Verifica que el componente Sidebar pueda instanciarse dentro del TestBed.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Sidebar } from './sidebar';

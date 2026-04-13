@@ -1,3 +1,4 @@
+// Smoke test del servicio de dominio Permissions.
 import { TestBed } from '@angular/core/testing';
 
 import { Permissions } from './permissions';

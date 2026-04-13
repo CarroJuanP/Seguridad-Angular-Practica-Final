@@ -1,18 +1,40 @@
+<!-- Tabla de grupos y dialogos auxiliares para CRUD y membresias. -->
 <div class="groups-container">
   <p-toast></p-toast>
 
   <p-card styleClass="mb-4">
-    <h2 class="m-0">Seleccion de grupo / espacio</h2>
-    <p class="mt-2">Despues de iniciar sesion, elige un grupo para entrar al dashboard.</p>
+    <div class="groups-hero">
+      <div>
+        <h1 class="m-0">Seleccion de grupo / espacio</h1>
+        <p class="mt-2 mb-0">Despues de iniciar sesion, elige un grupo para entrar al dashboard.</p>
+      </div>
+
+      <div class="groups-summary-pill">
+        <strong>{{ groups.length }}</strong>
+        <span>{{ groups.length === 1 ? 'grupo visible' : 'grupos visibles' }}</span>
+      </div>
+    </div>
   </p-card>
 
-  <p-table [value]="groups" [paginator]="true" [rows]="8" responsiveLayout="scroll">
+  <p-table [value]="groups" [paginator]="true" [rows]="8" responsiveLayout="scroll" [loading]="isLoading">
     <ng-template pTemplate="header">
       <tr>
         <th scope="col">Grupo</th>
         <th scope="col">Perfil</th>
         <th scope="col">Descripcion</th>
         <th scope="col">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="4">
+          <div class="empty-panel">
+            <i class="pi pi-users empty-icon"></i>
+            <div class="empty-title">No hay grupos disponibles</div>
+            <div class="empty-copy">Si tu usuario deberia ver grupos, vuelve a iniciar sesion o revisa sus memberships.</div>
+          </div>
+        </td>
       </tr>
     </ng-template>
 
@@ -30,10 +52,10 @@
         </td>
         <td>{{ group.description }}</td>
         <td class="actions">
-          <button pButton label="Entrar" icon="pi pi-arrow-right" class="p-button-sm" (click)="selectGroup(group)"></button>
+          <button pButton [label]="selectedGroupId === group.id ? 'Activo' : 'Entrar'" icon="pi pi-arrow-right" class="p-button-sm" (click)="selectGroup(group)" [outlined]="selectedGroupId === group.id"></button>
 
           <button
-            *ifHasPermission="$any('group:edit')"
+            *ngIf="canManageMembers(group)"
             pButton
             icon="pi pi-users"
             class="p-button-rounded p-button-info p-button-text"
@@ -41,7 +63,7 @@
           ></button>
 
           <button
-            *ifHasPermission="$any('group:edit')"
+            *ngIf="canEditGroup(group)"
             pButton
             icon="pi pi-pencil"
             class="p-button-rounded p-button-warning p-button-text"
@@ -49,7 +71,7 @@
           ></button>
 
           <button
-            *ifHasPermission="$any('group:delete')"
+            *ngIf="canDeleteGroup(group)"
             pButton
             icon="pi pi-trash"
             class="p-button-rounded p-button-danger p-button-text"
@@ -60,7 +82,7 @@
     </ng-template>
   </p-table>
 
-  <div class="mt-3" *ifHasPermission="$any('group:add')">
+  <div class="mt-3" *ngIf="canCreateGroups">
     <button pButton type="button" icon="pi pi-plus" label="Nuevo grupo" (click)="openNew()"></button>
   </div>
 
@@ -68,6 +90,29 @@
     <div class="form-grid">
       <label for="groupName">Nombre</label>
       <input id="groupName" pInputText [(ngModel)]="formData.name" />
+      <small class="text-500">Usa un nombre corto y facil de reconocer en el menu lateral.</small>
+
+      <label for="groupProfile">Perfil</label>
+      <p-select
+        id="groupProfile"
+        [options]="availableProfileOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="formData.llmModel"
+        placeholder="Selecciona un perfil"
+        (ngModelChange)="onProfileChange($event)"
+      ></p-select>
+      <small class="text-500">El grupo debe pertenecer a uno de los perfiles ya registrados.</small>
+
+      <div class="profile-preview" *ngIf="formData.llmModel">
+        <span
+          class="p-tag"
+          [style.background]="profileColorForCurrentGroup()"
+          style="color: #fff; border-radius: 999px; padding: 0.2rem 0.6rem; font-weight: 600"
+        >
+          {{ formData.llmModel }}
+        </span>
+      </div>
 
       <label for="groupDescription">Descripcion</label>
       <textarea id="groupDescription" pInputTextarea rows="3" [(ngModel)]="formData.description"></textarea>
@@ -75,7 +120,7 @@
 
     <ng-template pTemplate="footer">
       <button pButton type="button" label="Cancelar" class="p-button-text" (click)="displayDialog = false"></button>
-      <button pButton type="button" label="Guardar" (click)="saveGroup()"></button>
+      <button pButton type="button" label="Guardar" [loading]="isSaving" [disabled]="!canSaveGroup" (click)="saveGroup()"></button>
     </ng-template>
   </p-dialog>
 
@@ -86,20 +131,41 @@
     [style]="{ width: '680px' }"
   >
     <div class="members-grid">
-      <label for="memberEmail">Agregar por email</label>
+      <label for="memberSelect">Usuarios registrados</label>
       <div class="member-add-row">
-        <input id="memberEmail" pInputText [(ngModel)]="memberEmail" placeholder="usuario@correo.com" />
-        <button pButton type="button" label="Agregar" icon="pi pi-user-plus" (click)="addMemberByEmail()"></button>
+        <p-select
+          id="memberSelect"
+          [options]="memberUserOptions"
+          optionLabel="label"
+          optionValue="value"
+          optionDisabled="disabled"
+          [(ngModel)]="selectedMemberUserId"
+          placeholder="Selecciona un usuario para agregar"
+        ></p-select>
+        <button pButton type="button" label="Agregar" icon="pi pi-user-plus" [loading]="isUpdatingMembers" [disabled]="!selectedMemberUserId || isUpdatingMembers" (click)="addSelectedMember()"></button>
       </div>
+      <small class="text-500">Los usuarios que ya pertenecen al grupo se muestran como "En el grupo".</small>
     </div>
 
-    <p-table [value]="usersInSelectedGroup" [rows]="6" [paginator]="true" responsiveLayout="scroll">
+    <p-table [value]="memberDirectoryRows" [rows]="8" [paginator]="true" responsiveLayout="scroll" [loading]="isUpdatingMembers">
       <ng-template pTemplate="header">
         <tr>
           <th scope="col">Nombre</th>
           <th scope="col">Email</th>
           <th scope="col">Usuario</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Permisos en grupo</th>
           <th scope="col">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6">
+            <div class="empty-panel empty-panel-compact">
+              <div class="empty-title">No hay usuarios registrados disponibles</div>
+              <div class="empty-copy">Registra usuarios desde el modulo de usuarios para empezar a agregarlos a grupos.</div>
+            </div>
+          </td>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-user>
@@ -108,13 +174,49 @@
           <td>{{ user.email }}</td>
           <td>{{ user.username }}</td>
           <td>
-            <button
-              pButton
-              type="button"
-              icon="pi pi-user-minus"
-              class="p-button-rounded p-button-danger p-button-text"
-              (click)="removeMember(user)"
-            ></button>
+            <span class="member-status-pill" [class.member-status-pill-active]="isUserInMembersGroup(user)">
+              {{ memberStatusLabel(user) }}
+            </span>
+          </td>
+          <td>
+            <div class="permission-preview">
+              <span class="permission-pill" *ngFor="let permission of groupPermissionsForUser(user)">
+                {{ permission }}
+              </span>
+              <span class="text-500" *ngIf="!groupPermissionsForUser(user).length">Sin permisos</span>
+            </div>
+          </td>
+          <td>
+            <div class="actions" *ngIf="isUserInMembersGroup(user); else addUserAction">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-shield"
+                class="p-button-rounded p-button-help p-button-text"
+                [disabled]="isUpdatingMembers"
+                (click)="openPermissions(user)"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-user-minus"
+                class="p-button-rounded p-button-danger p-button-text"
+                [disabled]="isUpdatingMembers"
+                (click)="removeMember(user)"
+              ></button>
+            </div>
+
+            <ng-template #addUserAction>
+              <button
+                pButton
+                type="button"
+                label="Agregar"
+                icon="pi pi-user-plus"
+                class="p-button-sm"
+                [disabled]="isUpdatingMembers"
+                (click)="addMember(user)"
+              ></button>
+            </ng-template>
           </td>
         </tr>
       </ng-template>
@@ -122,6 +224,34 @@
 
     <ng-template pTemplate="footer">
       <button pButton type="button" label="Cerrar" class="p-button-text" (click)="showMembersDialog = false"></button>
+    </ng-template>
+  </p-dialog>
+
+  <p-dialog
+    [(visible)]="showPermissionsDialog"
+    [header]="permissionTargetUser ? ('Permisos de ' + permissionTargetUser.name) : 'Permisos del usuario'"
+    [modal]="true"
+    [style]="{ width: 'min(920px, 96vw)' }"
+  >
+    <div class="permission-editor" *ngIf="membersTargetGroup as group">
+      <p class="m-0 text-600">Configura permisos especificos para el grupo {{ group.name }}.</p>
+
+      <div class="permission-chip-grid">
+        <button
+          pButton
+          type="button"
+          class="p-button-sm permission-chip"
+          *ngFor="let permission of allPermissions"
+          [severity]="permissionDraft.includes(permission) ? 'primary' : 'secondary'"
+          [label]="permission"
+          (click)="togglePermission(permission)"
+        ></button>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <button pButton type="button" label="Cancelar" class="p-button-text" [disabled]="isUpdatingMembers" (click)="showPermissionsDialog = false"></button>
+      <button pButton type="button" label="Guardar permisos" [loading]="isUpdatingMembers" [disabled]="isUpdatingMembers" (click)="savePermissions()"></button>
     </ng-template>
   </p-dialog>
 </div>

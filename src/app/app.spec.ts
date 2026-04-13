@@ -1,3 +1,4 @@
+// Smoke test basico del componente raiz.
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app';
 

@@ -1,3 +1,4 @@
+/* Estilos de la pagina de registro y del stepper. */
 /** Registro Wrapper **/
 .register-wrapper {
   min-height: 100vh;
@@ -229,8 +230,8 @@
 
 .register-card ::ng-deep .p-button:disabled,
 .register-card ::ng-deep .p-button.p-disabled {
-  background: #94a3b8 !important;
-  border-color: #94a3b8 !important;
+  background: #64748b !important;
+  border-color: #64748b !important;
   color: #ffffff !important;
   opacity: 1 !important;
 }

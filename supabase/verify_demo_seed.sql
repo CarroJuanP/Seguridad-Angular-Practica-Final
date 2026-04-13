@@ -3,6 +3,8 @@
 -- Run section by section in Supabase SQL Editor
 -- =============================================================================
 
+-- Este script no crea ni modifica datos: solo ayuda a inspeccionar que el seed cargo correctamente.
+
 -- 1) Basic counts
 select 'users' as table_name, count(*) as total from public.users
 union all

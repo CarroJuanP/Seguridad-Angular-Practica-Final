@@ -1,5 +1,6 @@
+// Ejemplo de configuracion para compartir la estructura sin exponer valores reales.
 export const environment = {
   production: false,
-  supabaseUrl: 'https://ceezylfeskncwyfrxhlt.supabase.co',
-  supabaseAnonKey: 'esb_publishable_U9ZcHOD_xVd1tT6I7N5NGA_JRJnXk46',
+  // El frontend debe conocer unicamente la URL del API Gateway.
+  gatewayApiUrl: 'http://127.0.0.1:3000',
 };

@@ -1,3 +1,4 @@
+-- Migracion inicial dedicada solo a la tabla users y a su trigger/policies basicos.
 create extension if not exists "pgcrypto";
 
 create table if not exists public.users (

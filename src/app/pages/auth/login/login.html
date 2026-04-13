@@ -1,10 +1,13 @@
+<!-- Formulario de autenticacion. El submit real delega el proceso a Login.login(). -->
 <p-toast></p-toast>
 
 <div class="login-wrapper">
   <div class="login-card">
     <div class="card-header">
-      <i class="pi pi-lock header-icon"></i>
-      <h2>Iniciar sesion</h2>
+      <button type="button" class="logo-button" (click)="onLogoClick()" aria-label="Logo de login">
+        <i class="pi pi-lock header-icon"></i>
+      </button>
+      <h1>Iniciar sesión</h1>
       <p class="mb-0">Accede y luego selecciona tu grupo de trabajo.</p>
     </div>
 
@@ -12,25 +15,18 @@
 
     <form [formGroup]="loginForm" class="p-fluid" (ngSubmit)="login()">
       <div class="field-group">
-        <label class="field-label" for="loginEmail">Correo electronico</label>
-        <input id="loginEmail" pInputText formControlName="email" type="email" placeholder="tu@correo.com" class="field-input" />
-        <small *ngIf="f['email'].hasError('required') && f['email'].touched" class="p-error error-text">El email es obligatorio.</small>
-        <small *ngIf="f['email'].hasError('email') && f['email'].touched" class="p-error error-text">Ingresa un email valido.</small>
+        <label class="field-label" for="loginIdentifier">Usuario o correo electrónico</label>
+        <input id="loginIdentifier" pInputText formControlName="identifier" type="text" placeholder="usuario o tu@correo.com" class="field-input" />
+        <small *ngIf="f['identifier'].hasError('required') && f['identifier'].touched" class="p-error error-text">El usuario o correo es obligatorio.</small>
       </div>
 
       <div class="field-group">
-        <label class="field-label" for="loginPassword">Contrasena</label>
+        <label class="field-label" for="loginPassword">Contraseña</label>
         <p-password inputId="loginPassword" formControlName="password" [feedback]="false" placeholder="********" toggleMask="true"></p-password>
-        <small *ngIf="f['password'].hasError('required') && f['password'].touched" class="p-error error-text">La contrasena es obligatoria.</small>
+        <small *ngIf="f['password'].hasError('required') && f['password'].touched" class="p-error error-text">La contraseña es obligatoria.</small>
       </div>
 
-      <button pButton type="submit" label="Ingresar" icon="pi pi-sign-in" class="w-full"></button>
+      <button pButton type="submit" label="Ingresar" icon="pi pi-sign-in" class="w-full" [loading]="isSubmitting" [disabled]="loginForm.invalid || isSubmitting"></button>
     </form>
-
-    <div class="mt-4 text-sm text-600">
-      <strong>Demo:</strong>
-      <div>superadmin@local / Admin@12345</div>
-      <div>2023371057@uteq.edu.mx / Admin@12345</div>
-    </div>
   </div>
 </div>

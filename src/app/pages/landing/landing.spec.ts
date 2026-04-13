@@ -1,3 +1,4 @@
+// Smoke test de la landing publica.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Landing } from './landing';
