@@ -1,0 +1,61 @@
+ENTREGA DEL PROYECTO - FRONTEND, BACKEND Y POSTMAN
+
+Repositorio publico principal del proyecto:
+https://github.com/CarroJuanP/Seguridad-Angular-Practica-Final.git
+
+Acceso publico por secciones del proyecto:
+Frontend:
+https://github.com/CarroJuanP/Seguridad-Angular-Practica-Final.git
+Ruta dentro del repo: /src
+
+Backend:
+https://github.com/CarroJuanP/Seguridad-Angular-Practica-Final.git
+Ruta dentro del repo: /backend
+
+API Gateway:
+https://github.com/CarroJuanP/Seguridad-Angular-Practica-Final.git
+Ruta dentro del repo: /backend/apigateway
+
+Postman:
+https://github.com/CarroJuanP/Seguridad-Angular-Practica-Final.git
+Ruta dentro del repo: /postman
+
+API de health del API Gateway:
+Metodo: GET
+Ruta: /health
+URL local sugerida: http://127.0.0.1:3000/health
+
+Base URL para pruebas en Postman:
+http://127.0.0.1:3000
+
+Rutas principales para Postman:
+GET /health
+POST /auth/login
+POST /auth/register
+GET /permissions
+GET /users
+POST /users
+PATCH /users/:id
+DELETE /users/:id
+GET /groups
+POST /groups
+GET /groups/:id
+PATCH /groups/:id
+DELETE /groups/:id
+GET /groups/:id/users
+POST /groups/:id/users
+GET /groups/:id/ticket-summary
+GET /tickets
+POST /tickets
+GET /tickets/:id
+PATCH /tickets/:id
+DELETE /tickets/:id
+GET /catalogs/ticket-statuses
+
+Archivos de Postman incluidos en el proyecto:
+/postman/Practica2-Board-Architecture.postman_collection.json
+/postman/Practica2-Gateway.postman_collection.json
+/postman/Practica2-Gateway.postman_environment.json
+
+Observacion:
+El proyecto esta organizado en un solo repositorio publico, por lo que frontend y backend se entregan dentro del mismo repo en las rutas indicadas arriba.
