@@ -70,11 +70,11 @@ export class GatewayApiService {
   }
 
   createGroup(payload: { name: string; description: string; llmModel: string; llmColor: string; createdBy: string | null }): Observable<AppGroup | null> {
-    return this.postMutation<AppGroup | null>('/groups', payload, null);
+    return this.postMutation<AppGroup | null>('/groups', this.toCreateGroupPayload(payload), null);
   }
 
   updateGroup(groupId: string, payload: Partial<AppGroup>): Observable<AppGroup | null> {
-    return this.patchMutation<AppGroup | null>(`/groups/${groupId}`, payload, null);
+    return this.patchMutation<AppGroup | null>(`/groups/${groupId}`, this.toUpdateGroupPayload(payload), null);
   }
 
   deleteGroup(groupId: string): Observable<void> {
@@ -86,11 +86,11 @@ export class GatewayApiService {
   }
 
   createUser(user: AppUser): Observable<AppUser | null> {
-    return this.postMutation<AppUser | null>('/users', user, null);
+    return this.postMutation<AppUser | null>('/users', this.toUserMutationPayload(user, true), null);
   }
 
   updateUser(userId: string, user: AppUser): Observable<AppUser | null> {
-    return this.patchMutation<AppUser | null>(`/users/${userId}`, user, null);
+    return this.patchMutation<AppUser | null>(`/users/${userId}`, this.toUserMutationPayload(user, false), null);
   }
 
   deleteUser(userId: string): Observable<void> {
@@ -127,7 +127,14 @@ export class GatewayApiService {
   }
 
   getTicketById(ticketId: string): Observable<Ticket | null> {
-    return this.get<Ticket | null>(`/tickets/${ticketId}`, null);
+    if (!this.isEnabled()) {
+      return throwError(() => new Error('API Gateway no configurado.'));
+    }
+
+    return this.http.get<GatewayEnvelope<Ticket | null>>(`${this.baseUrl}/tickets/${ticketId}`, { headers: this.buildAuthHeaders() }).pipe(
+      map(response => response.data ?? null),
+      catchError(error => this.asMutationFailure(error)),
+    );
   }
 
   createTicket(payload: {
@@ -355,6 +362,51 @@ export class GatewayApiService {
   private asMutationFailure(error: unknown): Observable<never> {
     const gatewayError = this.toGatewayMutationError(error);
     return throwError(() => new Error(gatewayError.message || 'Error inesperado del API Gateway.'));
+  }
+
+  private toUserMutationPayload(user: AppUser, isCreate: boolean): Record<string, unknown> {
+    const payload: Record<string, unknown> = {
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      phone: user.phone,
+      birthDate: user.birthDate,
+      address: user.address,
+      isSuperAdmin: user.isSuperAdmin,
+      groupIds: user.groupIds,
+      permissionsByGroup: user.permissionsByGroup,
+    };
+
+    const normalizedId = user.id.trim();
+    if (isCreate && normalizedId) {
+      payload['id'] = normalizedId;
+    }
+
+    const normalizedPassword = user.password.trim();
+    if (normalizedPassword) {
+      payload['password'] = normalizedPassword;
+    }
+
+    return payload;
+  }
+
+  private toCreateGroupPayload(payload: { name: string; description: string; llmModel: string; llmColor: string; createdBy: string | null }): Record<string, unknown> {
+    return {
+      name: payload.name.trim(),
+      description: payload.description,
+      llmModel: payload.llmModel.trim(),
+      llmColor: payload.llmColor,
+      createdBy: payload.createdBy,
+    };
+  }
+
+  private toUpdateGroupPayload(payload: Partial<AppGroup>): Record<string, unknown> {
+    return {
+      name: typeof payload.name === 'string' ? payload.name.trim() : payload.name,
+      description: payload.description,
+      llmModel: typeof payload.llmModel === 'string' ? payload.llmModel.trim() : payload.llmModel,
+      llmColor: payload.llmColor,
+    };
   }
 
 }

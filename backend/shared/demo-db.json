@@ -33,11 +33,102 @@
       "birthDate": "1990-01-01",
       "address": "Queretaro",
       "isSuperAdmin": true,
-      "groupIds": ["grp-erp", "grp-support", "grp-bi"],
+      "groupIds": [
+        "grp-erp",
+        "grp-support",
+        "grp-bi"
+      ],
       "permissionsByGroup": {
-        "grp-erp": ["group:view", "group:add", "group:edit", "group:delete", "group:add:member", "group:remove:member", "group:manage", "user:view", "user:add", "user:edit", "user:edit:profile", "user:delete", "user:assign", "user:view:all", "user:edit:permissions", "user:deactivate", "user:activate", "user:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:edit:priority", "ticket:edit:deadline", "ticket:edit:assign", "ticket:manage"],
-        "grp-support": ["group:view", "group:add", "group:edit", "group:delete", "group:add:member", "group:remove:member", "group:manage", "user:view", "user:add", "user:edit", "user:edit:profile", "user:delete", "user:assign", "user:view:all", "user:edit:permissions", "user:deactivate", "user:activate", "user:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:edit:priority", "ticket:edit:deadline", "ticket:edit:assign", "ticket:manage"],
-        "grp-bi": ["group:view", "group:add", "group:edit", "group:delete", "group:add:member", "group:remove:member", "group:manage", "user:view", "user:add", "user:edit", "user:edit:profile", "user:delete", "user:assign", "user:view:all", "user:edit:permissions", "user:deactivate", "user:activate", "user:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:edit:priority", "ticket:edit:deadline", "ticket:edit:assign", "ticket:manage"]
+        "grp-erp": [
+          "group:view",
+          "group:add",
+          "group:edit",
+          "group:delete",
+          "group:add:member",
+          "group:remove:member",
+          "group:manage",
+          "user:view",
+          "user:add",
+          "user:edit",
+          "user:edit:profile",
+          "user:delete",
+          "user:assign",
+          "user:view:all",
+          "user:edit:permissions",
+          "user:deactivate",
+          "user:activate",
+          "user:manage",
+          "ticket:view",
+          "ticket:add",
+          "ticket:edit",
+          "ticket:delete",
+          "ticket:edit:state",
+          "ticket:edit:comment",
+          "ticket:edit:priority",
+          "ticket:edit:deadline",
+          "ticket:edit:assign",
+          "ticket:manage"
+        ],
+        "grp-support": [
+          "group:view",
+          "group:add",
+          "group:edit",
+          "group:delete",
+          "group:add:member",
+          "group:remove:member",
+          "group:manage",
+          "user:view",
+          "user:add",
+          "user:edit",
+          "user:edit:profile",
+          "user:delete",
+          "user:assign",
+          "user:view:all",
+          "user:edit:permissions",
+          "user:deactivate",
+          "user:activate",
+          "user:manage",
+          "ticket:view",
+          "ticket:add",
+          "ticket:edit",
+          "ticket:delete",
+          "ticket:edit:state",
+          "ticket:edit:comment",
+          "ticket:edit:priority",
+          "ticket:edit:deadline",
+          "ticket:edit:assign",
+          "ticket:manage"
+        ],
+        "grp-bi": [
+          "group:view",
+          "group:add",
+          "group:edit",
+          "group:delete",
+          "group:add:member",
+          "group:remove:member",
+          "group:manage",
+          "user:view",
+          "user:add",
+          "user:edit",
+          "user:edit:profile",
+          "user:delete",
+          "user:assign",
+          "user:view:all",
+          "user:edit:permissions",
+          "user:deactivate",
+          "user:activate",
+          "user:manage",
+          "ticket:view",
+          "ticket:add",
+          "ticket:edit",
+          "ticket:delete",
+          "ticket:edit:state",
+          "ticket:edit:comment",
+          "ticket:edit:priority",
+          "ticket:edit:deadline",
+          "ticket:edit:assign",
+          "ticket:manage"
+        ]
       }
     },
     {
@@ -50,11 +141,60 @@
       "birthDate": "1991-02-14",
       "address": "Celaya",
       "isSuperAdmin": false,
-      "groupIds": ["grp-erp", "grp-support", "grp-bi"],
+      "groupIds": [
+        "grp-erp",
+        "grp-support",
+        "grp-bi"
+      ],
       "permissionsByGroup": {
-        "grp-erp": ["user:view", "user:edit:profile", "group:view", "group:add", "group:edit", "group:delete", "group:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:manage"],
-        "grp-support": ["user:view", "user:edit:profile", "group:view", "group:add", "group:edit", "group:delete", "group:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:manage"],
-        "grp-bi": ["user:view", "user:edit:profile", "group:view", "group:add", "group:edit", "group:delete", "group:manage", "ticket:view", "ticket:add", "ticket:edit", "ticket:delete", "ticket:edit:state", "ticket:edit:comment", "ticket:manage"]
+        "grp-erp": [
+          "user:view",
+          "user:edit:profile",
+          "group:view",
+          "group:add",
+          "group:edit",
+          "group:delete",
+          "group:manage",
+          "ticket:view",
+          "ticket:add",
+          "ticket:edit",
+          "ticket:delete",
+          "ticket:edit:state",
+          "ticket:edit:comment",
+          "ticket:manage"
+        ],
+        "grp-support": [
+          "user:view",
+          "user:edit:profile",
+          "group:view",
+          "group:add",
+          "group:edit",
+          "group:delete",
+          "group:manage",
+          "ticket:view",
+          "ticket:add",
+          "ticket:edit",
+          "ticket:delete",
+          "ticket:edit:state",
+          "ticket:edit:comment",
+          "ticket:manage"
+        ],
+        "grp-bi": [
+          "user:view",
+          "user:edit:profile",
+          "group:view",
+          "group:add",
+          "group:edit",
+          "group:delete",
+          "group:manage",
+          "ticket:view",
+          "ticket:add",
+          "ticket:edit",
+          "ticket:delete",
+          "ticket:edit:state",
+          "ticket:edit:comment",
+          "ticket:manage"
+        ]
       }
     },
     {
@@ -67,10 +207,31 @@
       "birthDate": "1995-03-20",
       "address": "Irapuato",
       "isSuperAdmin": false,
-      "groupIds": ["grp-erp", "grp-bi"],
+      "groupIds": [
+        "grp-erp",
+        "grp-bi"
+      ],
       "permissionsByGroup": {
-        "grp-erp": ["user:view", "user:edit:profile", "group:view", "ticket:view", "ticket:add", "ticket:edit", "ticket:edit:state", "ticket:edit:comment"],
-        "grp-bi": ["user:view", "user:edit:profile", "group:view", "ticket:view", "ticket:add", "ticket:edit", "ticket:edit:state", "ticket:edit:comment"]
+        "grp-erp": [
+          "user:view",
+          "user:edit:profile",
+          "group:view",
+          "ticket:view",
+          "ticket:add",
+          "ticket:edit",
+          "ticket:edit:state",
+          "ticket:edit:comment"
+        ],
+        "grp-bi": [
+          "user:view",
+          "user:edit:profile",
+          "group:view",
+          "ticket:view",
+          "ticket:add",
+          "ticket:edit",
+          "ticket:edit:state",
+          "ticket:edit:comment"
+        ]
       }
     },
     {
@@ -83,10 +244,32 @@
       "birthDate": "1994-05-10",
       "address": "Salamanca",
       "isSuperAdmin": false,
-      "groupIds": ["grp-support"],
+      "groupIds": [
+        "grp-support"
+      ],
       "permissionsByGroup": {
-        "grp-support": ["user:view", "user:edit:profile", "group:view", "ticket:view", "ticket:add", "ticket:edit:comment"]
+        "grp-support": [
+          "user:view",
+          "user:edit:profile",
+          "group:view",
+          "ticket:view",
+          "ticket:add",
+          "ticket:edit:comment"
+        ]
       }
+    },
+    {
+      "id": "usr-1776109345934-i6prb9",
+      "name": "Esperanza nula",
+      "username": "esperanza",
+      "email": "esperanza@gmail.com",
+      "password": "Admin@12345",
+      "phone": "2131434265",
+      "birthDate": "2000-02-23",
+      "address": "Espe 2",
+      "isSuperAdmin": false,
+      "groupIds": [],
+      "permissionsByGroup": {}
     }
   ],
   "tickets": [

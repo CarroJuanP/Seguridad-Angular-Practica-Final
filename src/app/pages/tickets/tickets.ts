@@ -1,6 +1,7 @@
 // Pantalla principal de tickets en vista kanban o tabla.
 // Es uno de los componentes mas ricos: mezcla permisos, filtros, drag & drop y CRUD de detalle.
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -337,11 +338,24 @@ export class Tickets implements OnInit {
 
   openDetail(ticket: Ticket): void {
     // Relee el ticket desde BD para mostrar comentarios e historial completos.
-    this.dataService.getTicketById$(ticket.id).subscribe(full => {
-      this.selectedTicket = full ? { ...full } : { ...ticket };
-      this.refreshUsersInGroup(this.selectedTicket.groupId);
-      this.detailDialog = true;
-      this.commentDraft = '';
+    this.dataService.getTicketById$(ticket.id).subscribe({
+      next: full => {
+        this.selectedTicket = full ? { ...full } : { ...ticket };
+        this.refreshUsersInGroup(this.selectedTicket.groupId);
+        this.detailDialog = true;
+        this.commentDraft = '';
+      },
+      error: error => {
+        this.selectedTicket = { ...ticket };
+        this.refreshUsersInGroup(ticket.groupId);
+        this.detailDialog = true;
+        this.commentDraft = '';
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Detalle parcial',
+          detail: this.readErrorMessage(error, 'No se pudo recargar el detalle completo del ticket. Se muestra la informacion disponible.'),
+        });
+      },
     });
   }
 
@@ -450,21 +464,26 @@ export class Tickets implements OnInit {
       return;
     }
 
-    this.dataService.getTicketById$(ticketId).subscribe(targetTicket => {
-      if (!targetTicket || !this.canChangeStatus(targetTicket)) {
-        this.messageService.add({ severity: 'warn', summary: 'Movimiento no permitido', detail: 'Solo puedes mover tickets asignados a ti y con permiso de cambio de estado.' });
-        return;
-      }
-      this.pendingActionLabel = 'Moviendo estado';
-      this.dataService
-        .updateTicket$(ticketId, { status }, currentUser.id, `Estado movido a ${status}`)
-        .subscribe({
-          next: () => this.reloadTickets(),
-          error: error => {
-            this.pendingActionLabel = '';
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: this.readErrorMessage(error, 'No se pudo mover el ticket.') });
-          },
-        });
+    this.dataService.getTicketById$(ticketId).subscribe({
+      next: targetTicket => {
+        if (!targetTicket || !this.canChangeStatus(targetTicket)) {
+          this.messageService.add({ severity: 'warn', summary: 'Movimiento no permitido', detail: 'Solo puedes mover tickets asignados a ti y con permiso de cambio de estado.' });
+          return;
+        }
+        this.pendingActionLabel = 'Moviendo estado';
+        this.dataService
+          .updateTicket$(ticketId, { status }, currentUser.id, `Estado movido a ${status}`)
+          .subscribe({
+            next: () => this.reloadTickets(),
+            error: error => {
+              this.pendingActionLabel = '';
+              this.messageService.add({ severity: 'error', summary: 'Error', detail: this.readErrorMessage(error, 'No se pudo mover el ticket.') });
+            },
+          });
+      },
+      error: error => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: this.readErrorMessage(error, 'No se pudo validar el ticket antes de moverlo.') });
+      },
     });
   }
 
@@ -722,9 +741,48 @@ export class Tickets implements OnInit {
   }
 
   private readErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse) {
+      const directMessage = this.extractObjectMessage(error.error);
+      if (directMessage) {
+        return directMessage;
+      }
+
+      if (typeof error.message === 'string' && error.message.trim().length > 0) {
+        return error.message;
+      }
+    }
+
+    const objectMessage = this.extractObjectMessage(error);
+    if (objectMessage) {
+      return objectMessage;
+    }
+
     return error instanceof Error && error.message.trim().length > 0
       ? error.message
       : fallback;
+  }
+
+  private extractObjectMessage(value: unknown): string {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+
+      try {
+        const parsed = JSON.parse(trimmed) as { message?: unknown };
+        return typeof parsed.message === 'string' ? parsed.message : trimmed;
+      } catch {
+        return trimmed;
+      }
+    }
+
+    if (value !== null && typeof value === 'object' && 'message' in value) {
+      const candidate = (value as { message?: unknown }).message;
+      return typeof candidate === 'string' ? candidate : '';
+    }
+
+    return '';
   }
 
   private hasPermissionForGroup(groupId: string, permission: PermissionKey): boolean {

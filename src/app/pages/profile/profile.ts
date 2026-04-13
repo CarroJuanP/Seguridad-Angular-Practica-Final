@@ -61,7 +61,9 @@ export class Profile implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.loadUserProfile();
+    this.authService.hydrateCurrentUser$().subscribe(() => {
+      this.loadUserProfile();
+    });
   }
 
   loadUserProfile(): void {
@@ -120,6 +122,23 @@ export class Profile implements OnInit {
 
   onPhoneInput(rawValue: string): void {
     this.editData.telefono = String(rawValue ?? '').replaceAll(/\D/g, '').slice(0, 10);
+  }
+
+  onPhoneKeydown(event: KeyboardEvent): void {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    if (!/^\d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  onPhonePaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pastedText = event.clipboardData?.getData('text') ?? '';
+    this.onPhoneInput(`${this.editData.telefono}${pastedText}`);
   }
 
   onChangePasswordToggle(enabled: boolean): void {

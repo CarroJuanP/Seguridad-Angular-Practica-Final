@@ -11,9 +11,9 @@
     ]
   },
   "variable": [
-    { "key": "gatewayBaseUrl", "value": "http://127.0.0.1:54321/functions/v1/gateway-api" },
-    { "key": "identifier", "value": "admin@marher.com" },
-    { "key": "password", "value": "$p4$ww0rD1234" },
+    { "key": "gatewayBaseUrl", "value": "http://127.0.0.1:3000" },
+    { "key": "identifier", "value": "superadmin@local" },
+    { "key": "password", "value": "Admin@12345" },
     { "key": "authToken", "value": "" },
     { "key": "groupId", "value": "" },
     { "key": "userId", "value": "" },
@@ -159,7 +159,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Usuario API\",\n  \"username\": \"usuario.api\",\n  \"email\": \"usuario.api@uteq.edu.mx\",\n  \"password\": \"Demo@12345!\",\n  \"phone\": \"5557654321\",\n  \"birthDate\": \"2001-06-10\",\n  \"address\": \"Queretaro\",\n  \"isSuperAdmin\": false,\n  \"groupIds\": [\"{{groupId}}\"],\n  \"permissionsByGroup\": {\n    \"{{groupId}}\": [\"ticket:view\", \"ticket:add\", \"ticket:edit:comment\"]\n  }\n}"
+              "raw": "{\n  \"name\": \"Usuario API\",\n  \"username\": \"usuario.api\",\n  \"email\": \"usuario.api@uteq.edu.mx\",\n  \"password\": \"Demo@12345!\",\n  \"phone\": \"5557654321\",\n  \"birthDate\": \"2001-06-10\",\n  \"address\": \"Queretaro\",\n  \"isSuperAdmin\": false,\n  \"groupIds\": [\"{{groupId}}\"],\n  \"permissionsByGroup\": {\n    \"{{groupId}}\": [\"tickets:view\", \"tickets:add\", \"tickets:comment\"]\n  }\n}"
             },
             "url": "{{gatewayBaseUrl}}/users"
           }
@@ -171,7 +171,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Usuario API Editado\",\n  \"groupIds\": [\"{{groupId}}\"],\n  \"permissionsByGroup\": {\n    \"{{groupId}}\": [\"ticket:view\", \"ticket:add\", \"ticket:edit\", \"ticket:edit:state\"]\n  }\n}"
+              "raw": "{\n  \"name\": \"Usuario API Editado\",\n  \"groupIds\": [\"{{groupId}}\"],\n  \"permissionsByGroup\": {\n    \"{{groupId}}\": [\"tickets:view\", \"tickets:add\", \"tickets:edit\", \"tickets:move\"]\n  }\n}"
             },
             "url": "{{gatewayBaseUrl}}/users/{{userId}}"
           }
@@ -223,6 +223,18 @@
               "raw": "{\n  \"status\": \"En progreso\",\n  \"priority\": \"Alta\",\n  \"actorId\": \"{{userId}}\",\n  \"action\": \"Estado movido desde Postman\"\n}"
             },
             "url": "{{gatewayBaseUrl}}/tickets/{{ticketId}}"
+          }
+        },
+        {
+          "name": "Mover Estado Ticket",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Hecho\",\n  \"userId\": \"{{userId}}\",\n  \"permissions\": [\"tickets:move\"]\n}"
+            },
+            "url": "{{gatewayBaseUrl}}/tickets/{{ticketId}}/status"
           }
         },
         {

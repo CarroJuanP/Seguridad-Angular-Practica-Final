@@ -99,37 +99,38 @@ export class Home implements OnInit {
 
   ngOnInit(): void {
     // El dashboard depende de un usuario autenticado y de un grupo ya "entrado" desde la pagina Groups.
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      this.router.navigate(['/login']);
-      return;
-    }
+    this.authService.hydrateCurrentUser$().subscribe(currentUser => {
+      if (!currentUser) {
+        this.router.navigate(['/login']);
+        return;
+      }
 
-    const session = this.authService.getSession();
-    const selectedGroupId = session?.selectedGroupId;
-    const hasEnteredGroup = session?.hasEnteredGroup;
-    this.selectedGroupId = selectedGroupId ?? null;
+      const session = this.authService.getSession();
+      const selectedGroupId = session?.selectedGroupId;
+      const hasEnteredGroup = session?.hasEnteredGroup;
+      this.selectedGroupId = selectedGroupId ?? null;
 
-    this.dataService.getGroups$().subscribe(groups => {
-      this.userGroups = currentUser.isSuperAdmin
-        ? groups
-        : groups.filter(group => currentUser.groupIds.includes(group.id));
-    });
-
-    this.dataService.getAllTickets$().subscribe(tickets => {
-      this.visibleTickets = currentUser.isSuperAdmin
-        ? tickets
-        : tickets.filter(ticket => currentUser.groupIds.includes(ticket.groupId));
-    });
-
-    // Solo cargar dashboard si el usuario formalmente ha entrado a un grupo
-    if (selectedGroupId && hasEnteredGroup) {
-      this.dataService.getGroupById$(selectedGroupId).subscribe(group => {
-        this.selectedGroup = group;
+      this.dataService.getGroups$().subscribe(groups => {
+        this.userGroups = currentUser.isSuperAdmin
+          ? groups
+          : groups.filter(group => currentUser.groupIds.includes(group.id));
       });
-      this.loadGroupTicketContext(selectedGroupId);
-    }
-    // Si no, mostrar solo bienvenida
+
+      this.dataService.getAllTickets$().subscribe(tickets => {
+        this.visibleTickets = currentUser.isSuperAdmin
+          ? tickets
+          : tickets.filter(ticket => currentUser.groupIds.includes(ticket.groupId));
+      });
+
+      // Solo cargar dashboard si el usuario formalmente ha entrado a un grupo
+      if (selectedGroupId && hasEnteredGroup) {
+        this.dataService.getGroupById$(selectedGroupId).subscribe(group => {
+          this.selectedGroup = group;
+        });
+        this.loadGroupTicketContext(selectedGroupId);
+      }
+      // Si no, mostrar solo bienvenida
+    });
   }
 
   get totalTickets(): number {

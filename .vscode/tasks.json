@@ -3,6 +3,21 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Start Local Backend",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\scripts\\start-local-backend.ps1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
       "type": "npm",
       "script": "start",
       "isBackground": true,
@@ -37,6 +52,15 @@
           }
         }
       }
+    },
+    {
+      "label": "Start Frontend And Backend",
+      "dependsOn": [
+        "Start Local Backend",
+        "npm: start"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
     }
   ]
 }

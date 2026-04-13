@@ -2,5 +2,5 @@
 // La app solo conoce la URL del API Gateway.
 export const environment = {
   production: false,
-  gatewayApiUrl: 'https://ceezylfeskncwyfrxhlt.supabase.co/functions/v1/gateway-api',
+  gatewayApiUrl: 'http://127.0.0.1:3000',
 };

@@ -17,8 +17,14 @@ Esta carpeta aterriza la arquitectura de la imagen:
 ## Como correrlo
 
 1. Crea `backend/apigateway/.env` tomando como base `backend/apigateway/.env.example`.
-2. Levanta los microservicios en terminales separadas.
-3. Levanta el API Gateway al final.
+2. Asegura que exista `supabase/.env.local` con `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`, porque los microservicios ya leen y escriben sobre la BD real.
+3. Si quieres levantar toda la arquitectura de una vez desde la raiz del repo, usa:
+
+```powershell
+npm run backend:start
+```
+
+4. Si prefieres control manual, levanta los microservicios en terminales separadas y al final el API Gateway.
 
 En terminales separadas:
 
@@ -85,8 +91,8 @@ Body para login:
 
 ```json
 {
-  "email": "admin@marher.com",
-  "password": "$p4$ww0rD1234"
+  "identifier": "superadmin@local",
+  "password": "Admin@12345"
 }
 ```
 
@@ -107,5 +113,7 @@ El flujo objetivo es:
 - Frontend -> API Gateway
 - API Gateway -> microservicios internos
 - Microservicios -> responden solamente al gateway
+
+La persistencia activa ya no usa el JSON demo compartido. El origen de verdad es Supabase/PostgreSQL a traves de `backend/shared/db.ts`.
 
 Evita consumir microservicios directo desde el frontend.

@@ -5,7 +5,6 @@ import { Observable, of } from 'rxjs';
 import {
 	AppGroup,
 	AppUser,
-	MOCK_GROUPS,
 	PermissionKey,
 	Ticket,
 	TicketPriority,
@@ -23,10 +22,6 @@ export class Permissions {
 
 	getGroups$(): Observable<AppGroup[]> {
 		return this.gatewayApi.getGroups();
-	}
-
-	getGroupById(groupId: string): AppGroup | null {
-		return MOCK_GROUPS.find(group => group.id === groupId) ?? null;
 	}
 
 	getGroupById$(groupId: string): Observable<AppGroup | null> {

@@ -60,6 +60,8 @@
             pInputText
             [ngModel]="editData.telefono"
             (ngModelChange)="onPhoneInput($event)"
+            (keydown)="onPhoneKeydown($event)"
+            (paste)="onPhonePaste($event)"
             inputmode="numeric"
             maxlength="10"
             [disabled]="!isEditMode"

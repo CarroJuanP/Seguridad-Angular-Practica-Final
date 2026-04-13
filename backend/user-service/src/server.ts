@@ -4,14 +4,20 @@ import {
   ALL_PERMISSIONS,
   buildEnvelope,
   buildToken,
-  createId,
-  findUserByIdentifier,
-  readDemoDb,
   toPublicUser,
-  updateDemoDb,
   validateEmail,
+  verifyPassword,
   type AppUser,
 } from '../../shared/contracts.js';
+import {
+  createRegisteredUser,
+  deleteUserFromDb,
+  findUserById,
+  findUserByIdentifierInDb,
+  listPermissionKeys,
+  listUsers,
+  updateUserInDb,
+} from '../../shared/db.js';
 
 type LoginBody = {
   identifier: string;
@@ -114,14 +120,14 @@ const patchUserSchema = {
 app.get('/health', async () => buildEnvelope(200, 'SxUS200', { service: 'user-service' }));
 
 app.get('/permissions', async (_request: FastifyRequest, reply: FastifyReply) => {
-  return reply.code(200).send(buildEnvelope(200, 'SxUS200', [...ALL_PERMISSIONS]));
+  const permissions = await listPermissionKeys().catch(() => [...ALL_PERMISSIONS]);
+  return reply.code(200).send(buildEnvelope(200, 'SxUS200', permissions));
 });
 
 app.post<{ Body: LoginBody }>('/auth/login', { schema: loginSchema }, async (request, reply) => {
-  const db = readDemoDb();
-  const user = findUserByIdentifier(db.users, request.body.identifier);
+  const user = await findUserByIdentifierInDb(request.body.identifier);
 
-  if (user?.password !== request.body.password) {
+  if (!user || !verifyPassword(user.password, request.body.password)) {
     return reply.code(401).send(buildEnvelope(401, 'SxUS401', null, 'Credenciales invalidas'));
   }
 
@@ -139,35 +145,30 @@ app.post<{ Body: RegisterBody }>('/auth/register', { schema: registerSchema }, a
     return reply.code(400).send(buildEnvelope(400, 'SxUS400', null, 'Email invalido'));
   }
 
-  const currentDb = readDemoDb();
-  const conflict = currentDb.users.find(user => user.email === email || user.username.toLowerCase() === username);
+  const currentUsers = await listUsers(false);
+  const conflict = currentUsers.find(user => user.email === email || user.username.toLowerCase() === username);
   if (conflict) {
     return reply.code(409).send(buildEnvelope(409, 'SxUS409', null, 'El usuario ya existe'));
   }
 
-  const createdDb = updateDemoDb(db => {
-    db.users.push({
-      id: createId('usr'),
-      name: request.body.name.trim(),
-      email,
-      username,
-      password: request.body.password,
-      phone: request.body.phone?.trim() ?? '',
-      birthDate: request.body.birthDate?.trim() ?? '2000-01-01',
-      address: request.body.address?.trim() ?? '',
-      isSuperAdmin: false,
-      groupIds: [],
-      permissionsByGroup: {},
-    });
+  const createdUser = await createRegisteredUser({
+    name: request.body.name,
+    email,
+    username,
+    password: request.body.password,
+    phone: request.body.phone,
+    birthDate: request.body.birthDate,
+    address: request.body.address,
+    isSuperAdmin: false,
+    groupIds: [],
+    permissionsByGroup: {},
   });
-
-  const createdUser = createdDb.users.at(-1);
-  return reply.code(201).send(buildEnvelope(201, 'SxUS201', createdUser ? toPublicUser(createdUser) : null, 'Usuario registrado correctamente'));
+  return reply.code(201).send(buildEnvelope(201, 'SxUS201', toPublicUser(createdUser), 'Usuario registrado correctamente'));
 });
 
 app.get('/users', async (_request, reply) => {
-  const db = readDemoDb();
-  return reply.code(200).send(buildEnvelope(200, 'SxUS200', db.users.map(toPublicUser)));
+  const users = await listUsers(true);
+  return reply.code(200).send(buildEnvelope(200, 'SxUS200', users.map(toPublicUser)));
 });
 
 app.post<{ Body: UserBody }>('/users', { schema: userSchema }, async (request, reply) => {
@@ -180,37 +181,33 @@ app.post<{ Body: UserBody }>('/users', { schema: userSchema }, async (request, r
     return reply.code(400).send(buildEnvelope(400, 'SxUS400', null, 'Datos de usuario invalidos'));
   }
 
-  const currentDb = readDemoDb();
-  const conflict = currentDb.users.find(user => user.email === email || user.username.toLowerCase() === username);
+  const currentUsers = await listUsers(false);
+  const conflict = currentUsers.find(user => user.email === email || user.username.toLowerCase() === username);
   if (conflict) {
     return reply.code(409).send(buildEnvelope(409, 'SxUS409', null, 'El usuario ya existe'));
   }
 
-  const savedDb = updateDemoDb(db => {
-    db.users.push({
-      id: request.body.id?.trim() || createId('usr'),
-      name,
-      email,
-      username,
-      password,
-      phone: request.body.phone?.trim() ?? '',
-      birthDate: request.body.birthDate?.trim() ?? '2000-01-01',
-      address: request.body.address?.trim() ?? '',
-      isSuperAdmin: request.body.isSuperAdmin === true,
-      groupIds: Array.isArray(request.body.groupIds) ? [...new Set(request.body.groupIds.map(String).filter(Boolean))] : [],
-      permissionsByGroup: typeof request.body.permissionsByGroup === 'object' && request.body.permissionsByGroup
-        ? request.body.permissionsByGroup
-        : {},
-    });
+  const createdUser = await createRegisteredUser({
+    id: request.body.id?.trim(),
+    name,
+    email,
+    username,
+    password,
+    phone: request.body.phone,
+    birthDate: request.body.birthDate,
+    address: request.body.address,
+    isSuperAdmin: request.body.isSuperAdmin === true,
+    groupIds: Array.isArray(request.body.groupIds) ? [...new Set(request.body.groupIds.map(String).filter(Boolean))] : [],
+    permissionsByGroup: typeof request.body.permissionsByGroup === 'object' && request.body.permissionsByGroup
+      ? request.body.permissionsByGroup
+      : {},
   });
 
-  const createdUser = savedDb.users.at(-1);
-  return reply.code(201).send(buildEnvelope(201, 'SxUS201', createdUser ? toPublicUser(createdUser) : null, 'Usuario creado correctamente'));
+  return reply.code(201).send(buildEnvelope(201, 'SxUS201', toPublicUser(createdUser), 'Usuario creado correctamente'));
 });
 
 app.patch<{ Params: UpdateUserParams; Body: UserBody }>('/users/:id', { schema: patchUserSchema }, async (request, reply) => {
-  const db = readDemoDb();
-  const existingUser = db.users.find(user => user.id === request.params.id) ?? null;
+  const existingUser = await findUserById(request.params.id);
   if (!existingUser) {
     return reply.code(404).send(buildEnvelope(404, 'SxUS404', null, 'Usuario no encontrado'));
   }
@@ -221,47 +218,31 @@ app.patch<{ Params: UpdateUserParams; Body: UserBody }>('/users/:id', { schema: 
     return reply.code(400).send(buildEnvelope(400, 'SxUS400', null, 'Email invalido'));
   }
 
-  const savedDb = updateDemoDb(current => {
-    const user = current.users.find(item => item.id === request.params.id);
-    if (!user) {
-      return;
-    }
-
-    if (email) user.email = email;
-    if (username) user.username = username;
-    if (request.body.name?.trim()) user.name = request.body.name.trim();
-    if (request.body.password !== undefined && request.body.password !== '') user.password = request.body.password;
-    if (request.body.phone !== undefined) user.phone = request.body.phone.trim();
-    if (request.body.birthDate !== undefined) user.birthDate = request.body.birthDate.trim() || '2000-01-01';
-    if (request.body.address !== undefined) user.address = request.body.address.trim();
-    if (request.body.isSuperAdmin !== undefined) user.isSuperAdmin = request.body.isSuperAdmin === true;
-    if (Array.isArray(request.body.groupIds)) user.groupIds = [...new Set(request.body.groupIds.map(String).filter(Boolean))];
-    if (request.body.permissionsByGroup && typeof request.body.permissionsByGroup === 'object') {
-      user.permissionsByGroup = request.body.permissionsByGroup;
-    }
+  const savedUser = await updateUserInDb(request.params.id, {
+    email,
+    username,
+    name: request.body.name,
+    password: request.body.password,
+    phone: request.body.phone,
+    birthDate: request.body.birthDate,
+    address: request.body.address,
+    isSuperAdmin: request.body.isSuperAdmin,
+    groupIds: Array.isArray(request.body.groupIds) ? [...new Set(request.body.groupIds.map(String).filter(Boolean))] : undefined,
+    permissionsByGroup: request.body.permissionsByGroup && typeof request.body.permissionsByGroup === 'object'
+      ? request.body.permissionsByGroup
+      : undefined,
   });
 
-  const savedUser = savedDb.users.find(user => user.id === request.params.id) ?? null;
   return reply.code(200).send(buildEnvelope(200, 'SxUS200', savedUser ? toPublicUser(savedUser) : null, 'Usuario actualizado correctamente'));
 });
 
 app.delete<{ Params: UpdateUserParams }>('/users/:id', async (request, reply) => {
-  const db = readDemoDb();
-  const userExists = db.users.some(user => user.id === request.params.id);
+  const userExists = await findUserById(request.params.id);
   if (!userExists) {
     return reply.code(404).send(buildEnvelope(404, 'SxUS404', null, 'Usuario no encontrado'));
   }
 
-  updateDemoDb(current => {
-    current.users = current.users.filter(user => user.id !== request.params.id);
-    current.tickets = current.tickets.map(ticket => {
-      if (ticket.assigneeId === request.params.id) {
-        return { ...ticket, assigneeId: null, assigneeName: null };
-      }
-
-      return ticket;
-    });
-  });
+  await deleteUserFromDb(request.params.id);
 
   return reply.code(200).send(buildEnvelope(200, 'SxUS200', { id: request.params.id }, 'Usuario eliminado correctamente'));
 });

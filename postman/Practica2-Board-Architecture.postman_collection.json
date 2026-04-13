@@ -26,7 +26,7 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@marher.com\",\n  \"password\": \"$p4$ww0rD1234\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"identifier\": \"superadmin@local\",\n  \"password\": \"Admin@12345\"\n}" },
             "url": "{{gatewayUrl}}/auth/login"
           }
         }

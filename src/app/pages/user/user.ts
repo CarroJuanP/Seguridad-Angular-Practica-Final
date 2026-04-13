@@ -73,44 +73,45 @@ export class UserPage implements OnInit {
 
   ngOnInit(): void {
     // Si la sesion no tiene permiso user:view, se redirige antes de cargar datos costosos.
-    const currentUser = this.authService.getCurrentUser();
-    this.isCurrentUserSuperAdmin = currentUser?.isSuperAdmin ?? false;
-    const session = this.authService.getSession();
-    this.selectedGroupId = session?.selectedGroupId ?? currentUser?.groupIds[0] ?? null;
-    const effectivePermissions = session?.permissions ?? [];
-    const allUserPermissions: PermissionKey[] = currentUser
-      ? [...new Set(Object.values(currentUser.permissionsByGroup ?? {}).flat())] as PermissionKey[]
-      : [];
-    const canManageUsers = this.isCurrentUserSuperAdmin || [...effectivePermissions, ...allUserPermissions].some(
-      permission => ['user:view', 'user:view:all', 'user:add', 'user:edit', 'user:delete', 'user:manage'].includes(permission),
-    );
-    this.canCreateUsers = this.hasUserCapability(['user:add', 'user:manage'], effectivePermissions, allUserPermissions);
-    this.canEditUsers = this.hasUserCapability(['user:edit', 'user:manage'], effectivePermissions, allUserPermissions);
-    this.canDeleteUsers = this.hasUserCapability(['user:delete', 'user:manage'], effectivePermissions, allUserPermissions);
+    this.authService.hydrateCurrentUser$().subscribe(currentUser => {
+      this.isCurrentUserSuperAdmin = currentUser?.isSuperAdmin ?? false;
+      const session = this.authService.getSession();
+      this.selectedGroupId = session?.selectedGroupId ?? currentUser?.groupIds[0] ?? null;
+      const effectivePermissions = session?.permissions ?? [];
+      const allUserPermissions: PermissionKey[] = currentUser
+        ? [...new Set(Object.values(currentUser.permissionsByGroup ?? {}).flat())] as PermissionKey[]
+        : [];
+      const canManageUsers = this.isCurrentUserSuperAdmin || [...effectivePermissions, ...allUserPermissions].some(
+        permission => ['user:view', 'user:view:all', 'user:add', 'user:edit', 'user:delete', 'user:manage'].includes(permission),
+      );
+      this.canCreateUsers = this.hasUserCapability(['user:add', 'user:manage'], effectivePermissions, allUserPermissions);
+      this.canEditUsers = this.hasUserCapability(['user:edit', 'user:manage'], effectivePermissions, allUserPermissions);
+      this.canDeleteUsers = this.hasUserCapability(['user:delete', 'user:manage'], effectivePermissions, allUserPermissions);
 
-    if (!canManageUsers) {
-      this.router.navigate(['/home']);
-      return;
-    }
-    if (!this.selectedGroupId) {
-      this.router.navigate(['/groups']);
-      return;
-    }
+      if (!canManageUsers) {
+        this.router.navigate(['/home']);
+        return;
+      }
+      if (!this.selectedGroupId) {
+        this.router.navigate(['/groups']);
+        return;
+      }
 
-    // Build group name map for display
-    this.dataService.getGroups$().subscribe(groups => {
-      this.groupNameMap = Object.fromEntries(groups.map(g => [g.id, g.name]));
-      const allowedGroups = this.isCurrentUserSuperAdmin
-        ? groups
-        : groups.filter(group => currentUser?.groupIds.includes(group.id));
-      this.availableGroups = allowedGroups.map(group => ({
-        label: group.name,
-        value: group.id,
-        description: group.description,
-      }));
+      // Build group name map for display
+      this.dataService.getGroups$().subscribe(groups => {
+        this.groupNameMap = Object.fromEntries(groups.map(g => [g.id, g.name]));
+        const allowedGroups = this.isCurrentUserSuperAdmin
+          ? groups
+          : groups.filter(group => currentUser?.groupIds.includes(group.id));
+        this.availableGroups = allowedGroups.map(group => ({
+          label: group.name,
+          value: group.id,
+          description: group.description,
+        }));
+      });
+
+      this.loadUsers();
     });
-
-    this.loadUsers();
   }
 
   loadUsers(): void {

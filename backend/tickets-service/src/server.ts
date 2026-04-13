@@ -4,17 +4,21 @@ import {
   TICKET_PRIORITIES,
   TICKET_STATUSES,
   buildEnvelope,
-  createId,
-  createTicketCode,
-  findTicket,
   hasAnyPermission,
-  listTickets,
-  readDemoDb,
-  resolveTicketUsers,
-  updateDemoDb,
   type AppUser,
-  type Ticket,
 } from '../../shared/contracts.js';
+import {
+  addTicketCommentInDb,
+  createTicketInDb,
+  deleteTicketFromDb,
+  findGroupByIdInDb,
+  findTicketInDb,
+  findUserById,
+  listTicketPriorityNames,
+  listTicketStatusNames,
+  listTicketsFromDb,
+  updateTicketInDb,
+} from '../../shared/db.js';
 
 type TicketParams = {
   id: string;
@@ -123,31 +127,34 @@ const moveStatusSchema = {
 app.get('/health', async () => buildEnvelope(200, 'SxTK200', { service: 'tickets-service' }));
 
 app.get('/catalogs/ticket-statuses', async (_request, reply) => {
-  return reply.code(200).send(buildEnvelope(200, 'SxTK200', [...TICKET_STATUSES]));
+  const statuses = await listTicketStatusNames().catch(() => [...TICKET_STATUSES]);
+  return reply.code(200).send(buildEnvelope(200, 'SxTK200', statuses));
 });
 
 app.get('/catalogs/ticket-priorities', async (_request, reply) => {
-  return reply.code(200).send(buildEnvelope(200, 'SxTK200', [...TICKET_PRIORITIES]));
+  const priorities = await listTicketPriorityNames().catch(() => [...TICKET_PRIORITIES]);
+  return reply.code(200).send(buildEnvelope(200, 'SxTK200', priorities));
 });
 
 app.get<{ Querystring: TicketQuery }>('/tickets', async (request, reply) => {
-  const db = readDemoDb();
-  return reply.code(200).send(buildEnvelope(200, 'SxTK200', listTickets(db, request.query.groupId)));
+  const tickets = await listTicketsFromDb(request.query.groupId);
+  return reply.code(200).send(buildEnvelope(200, 'SxTK200', tickets));
 });
 
 app.post<{ Body: CreateTicketBody }>('/tickets', { schema: createTicketSchema }, async (request, reply) => {
-  if (!TICKET_STATUSES.includes(request.body.status as typeof TICKET_STATUSES[number])) {
+  const validStatuses = await listTicketStatusNames().catch(() => [...TICKET_STATUSES]);
+  if (!validStatuses.includes(request.body.status)) {
     return reply.code(400).send(buildEnvelope(400, 'SxTK400', null, 'Estado invalido'));
   }
-  if (!TICKET_PRIORITIES.includes(request.body.priority as typeof TICKET_PRIORITIES[number])) {
+  const validPriorities = await listTicketPriorityNames().catch(() => [...TICKET_PRIORITIES]);
+  if (!validPriorities.includes(request.body.priority)) {
     return reply.code(400).send(buildEnvelope(400, 'SxTK400', null, 'Prioridad invalida'));
   }
 
-  const db = readDemoDb();
-  const groupExists = db.groups.some(group => group.id === request.body.groupId);
-  const creator = db.users.find(user => user.id === request.body.createdBy) ?? null;
+  const groupExists = await findGroupByIdInDb(request.body.groupId);
+  const creator = await findUserById(request.body.createdBy);
   const assignee = request.body.assigneeId
-    ? db.users.find(user => user.id === request.body.assigneeId) ?? null
+    ? await findUserById(request.body.assigneeId)
     : null;
 
   if (!groupExists || !creator) {
@@ -157,41 +164,21 @@ app.post<{ Body: CreateTicketBody }>('/tickets', { schema: createTicketSchema },
     return reply.code(400).send(buildEnvelope(400, 'SxTK400', null, 'El asignado no pertenece al grupo'));
   }
 
-  const savedDb = updateDemoDb(current => {
-    const nextTicket: Ticket = {
-      id: createId('tk'),
-      groupId: request.body.groupId,
-      title: request.body.title.trim(),
-      description: request.body.description?.trim() ?? '',
-      status: request.body.status,
-      assigneeId: assignee?.id ?? null,
-      assigneeName: assignee?.name ?? null,
-      createdById: creator.id,
-      createdByName: creator.name,
-      priority: request.body.priority,
-      createdAt: new Date().toISOString(),
-      dueDate: request.body.dueDate,
-      comments: [],
-      history: [
-        {
-          id: createId('th'),
-          at: new Date().toISOString(),
-          actorName: creator.name,
-          action: 'Ticket creado',
-        },
-      ],
-    };
-
-    nextTicket.id = createTicketCode(current.tickets);
-    current.tickets.push(nextTicket);
+  const createdTicket = await createTicketInDb({
+    groupId: request.body.groupId,
+    title: request.body.title,
+    description: request.body.description,
+    status: request.body.status,
+    priority: request.body.priority,
+    dueDate: request.body.dueDate,
+    assigneeId: assignee?.id ?? null,
+    createdBy: creator.id,
   });
-
-  const createdTicket = resolveTicketUsers(savedDb.tickets.at(-1) as Ticket, savedDb.users);
   return reply.code(201).send(buildEnvelope(201, 'SxTK201', createdTicket, 'Ticket creado correctamente'));
 });
 
 app.get<{ Params: TicketParams }>('/tickets/:id', async (request, reply) => {
-  const ticket = findTicket(readDemoDb(), request.params.id);
+  const ticket = await findTicketInDb(request.params.id);
   if (!ticket) {
     return reply.code(404).send(buildEnvelope(404, 'SxTK404', null, 'Ticket no encontrado'));
   }
@@ -200,82 +187,69 @@ app.get<{ Params: TicketParams }>('/tickets/:id', async (request, reply) => {
 });
 
 app.patch<{ Params: TicketParams; Body: UpdateTicketBody }>('/tickets/:id', { schema: patchTicketSchema }, async (request, reply) => {
-  const db = readDemoDb();
-  const existingTicket = db.tickets.find(ticket => ticket.id === request.params.id) ?? null;
+  const existingTicket = await findTicketInDb(request.params.id);
   if (!existingTicket) {
     return reply.code(404).send(buildEnvelope(404, 'SxTK404', null, 'Ticket no encontrado'));
   }
 
   const actor = request.body.actorId
-    ? db.users.find(user => user.id === request.body.actorId) ?? null
+    ? await findUserById(request.body.actorId)
     : null;
   let assignee: AppUser | null | undefined;
   if (request.body.assigneeId) {
-    assignee = db.users.find(user => user.id === request.body.assigneeId) ?? null;
+    assignee = await findUserById(request.body.assigneeId);
   } else if (request.body.assigneeId === null) {
     assignee = null;
   } else {
     assignee = undefined;
   }
 
-  if (request.body.status && !TICKET_STATUSES.includes(request.body.status as typeof TICKET_STATUSES[number])) {
+  const validStatuses = await listTicketStatusNames().catch(() => [...TICKET_STATUSES]);
+  if (request.body.status && !validStatuses.includes(request.body.status)) {
     return reply.code(400).send(buildEnvelope(400, 'SxTK400', null, 'Estado invalido'));
   }
-  if (request.body.priority && !TICKET_PRIORITIES.includes(request.body.priority as typeof TICKET_PRIORITIES[number])) {
+  const validPriorities = await listTicketPriorityNames().catch(() => [...TICKET_PRIORITIES]);
+  if (request.body.priority && !validPriorities.includes(request.body.priority)) {
     return reply.code(400).send(buildEnvelope(400, 'SxTK400', null, 'Prioridad invalida'));
   }
   if (assignee && !assignee.groupIds.includes(existingTicket.groupId)) {
     return reply.code(400).send(buildEnvelope(400, 'SxTK400', null, 'El asignado no pertenece al grupo'));
   }
 
-  const savedDb = updateDemoDb(current => {
-    const ticket = current.tickets.find(item => item.id === request.params.id);
-    if (!ticket) {
-      return;
-    }
+  let nextAssigneeId: string | null | undefined;
+  if (request.body.assigneeId === undefined) {
+    nextAssigneeId = undefined;
+  } else {
+    nextAssigneeId = assignee?.id ?? null;
+  }
 
-    if (request.body.title?.trim()) ticket.title = request.body.title.trim();
-    if (request.body.description !== undefined) ticket.description = request.body.description.trim();
-    if (request.body.status) ticket.status = request.body.status;
-    if (request.body.priority) ticket.priority = request.body.priority;
-    if (request.body.dueDate !== undefined) ticket.dueDate = request.body.dueDate;
-    if (request.body.assigneeId !== undefined) {
-      ticket.assigneeId = assignee?.id ?? null;
-      ticket.assigneeName = assignee?.name ?? null;
-    }
-
-    if (actor) {
-      ticket.history.push({
-        id: createId('th'),
-        at: new Date().toISOString(),
-        actorName: actor.name,
-        action: request.body.action?.trim() || 'Ticket actualizado',
-      });
-    }
+  const updatedTicket = await updateTicketInDb(request.params.id, {
+    title: request.body.title,
+    description: request.body.description,
+    status: request.body.status,
+    priority: request.body.priority,
+    dueDate: request.body.dueDate,
+    assigneeId: nextAssigneeId,
+    actorId: actor?.id,
+    action: request.body.action,
   });
-
-  const updatedTicket = findTicket(savedDb, request.params.id);
   return reply.code(200).send(buildEnvelope(200, 'SxTK200', updatedTicket, 'Ticket actualizado correctamente'));
 });
 
 app.delete<{ Params: TicketParams }>('/tickets/:id', async (request, reply) => {
-  const db = readDemoDb();
-  const exists = db.tickets.some(ticket => ticket.id === request.params.id);
+  const exists = await findTicketInDb(request.params.id);
   if (!exists) {
     return reply.code(404).send(buildEnvelope(404, 'SxTK404', null, 'Ticket no encontrado'));
   }
 
-  updateDemoDb(current => {
-    current.tickets = current.tickets.filter(ticket => ticket.id !== request.params.id);
-  });
+  await deleteTicketFromDb(request.params.id);
 
   return reply.code(200).send(buildEnvelope(200, 'SxTK200', { id: request.params.id }, 'Ticket eliminado correctamente'));
 });
 
 app.post<{ Params: TicketParams; Body: CommentBody }>('/tickets/:id/comments', { schema: commentSchema }, async (request, reply) => {
-  const db = readDemoDb();
-  const ticket = db.tickets.find(current => current.id === request.params.id) ?? null;
-  const author = db.users.find(current => current.id === request.body.authorId) ?? null;
+  const ticket = await findTicketInDb(request.params.id);
+  const author = await findUserById(request.body.authorId);
   if (!ticket) {
     return reply.code(404).send(buildEnvelope(404, 'SxTK404', null, 'Ticket no encontrado'));
   }
@@ -283,34 +257,12 @@ app.post<{ Params: TicketParams; Body: CommentBody }>('/tickets/:id/comments', {
     return reply.code(404).send(buildEnvelope(404, 'SxTK404', null, 'Autor no encontrado'));
   }
 
-  const savedDb = updateDemoDb(current => {
-    const targetTicket = current.tickets.find(item => item.id === request.params.id);
-    if (!targetTicket) {
-      return;
-    }
-
-    targetTicket.comments.push({
-      id: createId('tc'),
-      authorId: author.id,
-      authorName: author.name,
-      message: request.body.message.trim(),
-      createdAt: new Date().toISOString(),
-    });
-    targetTicket.history.push({
-      id: createId('th'),
-      at: new Date().toISOString(),
-      actorName: author.name,
-      action: 'Comentario agregado',
-    });
-  });
-
-  return reply.code(201).send(buildEnvelope(201, 'SxTK201', findTicket(savedDb, request.params.id), 'Comentario agregado correctamente'));
+  return reply.code(201).send(buildEnvelope(201, 'SxTK201', await addTicketCommentInDb(request.params.id, author.id, request.body.message), 'Comentario agregado correctamente'));
 });
 
 app.patch<{ Params: TicketParams; Body: UpdateTicketStatusBody }>('/tickets/:id/status', { schema: moveStatusSchema }, async (request, reply) => {
-  const db = readDemoDb();
-  const ticket = db.tickets.find(item => item.id === request.params.id) ?? null;
-  const authUser = db.users.find(user => user.id === request.body.userId) ?? null;
+  const ticket = await findTicketInDb(request.params.id);
+  const authUser = await findUserById(request.body.userId);
   if (!ticket || !authUser) {
     return reply.code(404).send(buildEnvelope(404, 'SxTK404', null, 'Ticket o usuario no encontrado'));
   }
@@ -321,26 +273,18 @@ app.patch<{ Params: TicketParams; Body: UpdateTicketStatusBody }>('/tickets/:id/
     return reply.code(403).send(buildEnvelope(403, 'SxTK403', null, 'No autorizado para mover el ticket'));
   }
 
-  if (!TICKET_STATUSES.includes(request.body.status as typeof TICKET_STATUSES[number])) {
+  const validStatuses = await listTicketStatusNames().catch(() => [...TICKET_STATUSES]);
+  if (!validStatuses.includes(request.body.status)) {
     return reply.code(400).send(buildEnvelope(400, 'SxTK400', null, 'Estado invalido'));
   }
 
-  const savedDb = updateDemoDb(current => {
-    const targetTicket = current.tickets.find(item => item.id === request.params.id);
-    if (!targetTicket) {
-      return;
-    }
-
-    targetTicket.status = request.body.status;
-    targetTicket.history.push({
-      id: createId('th'),
-      at: new Date().toISOString(),
-      actorName: authUser.name,
-      action: `Estado actualizado a ${request.body.status}`,
-    });
+  const updated = await updateTicketInDb(request.params.id, {
+    status: request.body.status,
+    actorId: authUser.id,
+    action: `Estado actualizado a ${request.body.status}`,
   });
 
-  return reply.code(200).send(buildEnvelope(200, 'SxTK200', findTicket(savedDb, request.params.id), 'Estado actualizado correctamente'));
+  return reply.code(200).send(buildEnvelope(200, 'SxTK200', updated, 'Estado actualizado correctamente'));
 });
 
 await app.listen({ port: 3002, host: '0.0.0.0' });

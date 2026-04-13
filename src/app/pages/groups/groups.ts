@@ -1,6 +1,7 @@
 // Pantalla de seleccion y administracion de grupos.
 // Mezcla dos roles: entrar a un espacio de trabajo y, si hay permisos, mantener catalogo y miembros.
 import { Component, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -71,7 +72,9 @@ export class Groups implements OnInit {
   ngOnInit(): void {
     // La seleccion visual siempre inicia vacia; entrar al grupo sigue actualizando la sesion real.
     this.selectedGroupId = null;
-    this.loadGroups();
+    this.authService.hydrateCurrentUser$().subscribe(() => {
+      this.loadGroups();
+    });
   }
 
   get hasGroups(): boolean {
@@ -386,9 +389,48 @@ export class Groups implements OnInit {
   }
 
   private readErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse) {
+      const directMessage = this.extractObjectMessage(error.error);
+      if (directMessage) {
+        return directMessage;
+      }
+
+      if (typeof error.message === 'string' && error.message.trim().length > 0) {
+        return error.message;
+      }
+    }
+
+    const objectMessage = this.extractObjectMessage(error);
+    if (objectMessage) {
+      return objectMessage;
+    }
+
     return error instanceof Error && error.message.trim().length > 0
       ? error.message
       : fallback;
+  }
+
+  private extractObjectMessage(value: unknown): string {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+
+      try {
+        const parsed = JSON.parse(trimmed) as { message?: unknown };
+        return typeof parsed.message === 'string' ? parsed.message : trimmed;
+      } catch {
+        return trimmed;
+      }
+    }
+
+    if (value !== null && typeof value === 'object' && 'message' in value) {
+      const candidate = (value as { message?: unknown }).message;
+      return typeof candidate === 'string' ? candidate : '';
+    }
+
+    return '';
   }
 
   private loadMembersDialogData(groupId: string, openDialog = false): void {

@@ -35,6 +35,7 @@ export class AuthService {
 
   constructor(private readonly gatewayApi: GatewayApiService) {
     this.normalizePersistedUsers();
+    this.refreshUsersFromGateway();
   }
 
   login(identifier: string, password: string): Observable<AppUser | null> {
@@ -133,12 +134,21 @@ export class AuthService {
     }
 
     const byEmail = users.find(user => user.email.toLowerCase() === normalizedEmail) ?? null;
-    if (!byEmail) {
+    if (byEmail) {
+      this.syncSessionFromUser(byEmail, session.token);
+      return byEmail;
+    }
+
+    const tokenUser = session.token ? this.buildUserFromToken(session.token, session) : null;
+    if (!tokenUser) {
       return null;
     }
 
-    this.syncSessionFromUser(byEmail, session.token);
-    return byEmail;
+    const mergedUsers = users.filter(user => user.id !== tokenUser.id && user.email.toLowerCase() !== tokenUser.email.toLowerCase());
+    mergedUsers.push(tokenUser);
+    this.saveUsers(mergedUsers);
+    this.syncSessionFromUser(tokenUser, session.token);
+    return tokenUser;
   }
 
   getUsers(): AppUser[] {
@@ -192,6 +202,33 @@ export class AuthService {
         return mergedUsers;
       }),
       catchError(() => of(this.getUsers())),
+    );
+  }
+
+  hydrateCurrentUser$(): Observable<AppUser | null> {
+    const session = this.getSession();
+    const fallbackUser = this.getCurrentUser();
+
+    if (!this.gatewayApi.isEnabled()) {
+      return of(fallbackUser);
+    }
+
+    return this.getUsers$().pipe(
+      map(users => {
+        this.saveUsers(users);
+
+        const freshUser =
+          users.find(user => user.id === (session?.userId ?? '')) ??
+          users.find(user => user.email.toLowerCase() === (session?.email ?? '').toLowerCase()) ??
+          fallbackUser;
+
+        if (freshUser && session?.token) {
+          this.syncSessionFromUser(freshUser, session.token);
+        }
+
+        return freshUser;
+      }),
+      catchError(() => of(fallbackUser)),
     );
   }
 
@@ -285,6 +322,37 @@ export class AuthService {
     if (users.length) {
       this.saveUsers(users);
     }
+  }
+
+  private refreshUsersFromGateway(): void {
+    const session = this.getSession();
+    if (!this.gatewayApi.isEnabled() || !session?.token) {
+      return;
+    }
+
+    this.gatewayApi.getUsers().pipe(
+      catchError(() => of([])),
+    ).subscribe(usersFromGateway => {
+      if (!usersFromGateway.length) {
+        return;
+      }
+
+      const mergedUsers = this.mergeUsersWithCache(usersFromGateway);
+      this.saveUsers(mergedUsers);
+
+      const freshSession = this.getSession();
+      if (!freshSession) {
+        return;
+      }
+
+      const freshUser = mergedUsers.find(user =>
+        user.id === freshSession.userId || user.email.toLowerCase() === freshSession.email.toLowerCase(),
+      ) ?? null;
+
+      if (freshUser) {
+        this.syncSessionFromUser(freshUser, freshSession.token);
+      }
+    });
   }
 
   private persistGatewayLogin(loginResult: GatewayLoginResult, password: string, fallbackIdentifier: string): AppUser | null {
@@ -600,6 +668,32 @@ export class AuthService {
       .join(' ');
   }
 
+  private buildUserFromToken(token: string, session: UserSession): AppUser | null {
+    const payload = this.readJwtPayload(token);
+    const email = this.readString(payload?.['email']) || session.email;
+    const id = this.readString(payload?.['sub']) || session.userId;
+    if (!email || !id) {
+      return null;
+    }
+
+    const rawGroupIds = Array.isArray(payload?.['groupIds']) ? payload?.['groupIds'] as unknown[] : [];
+    const groupIds = [...new Set(rawGroupIds.map(String).filter(Boolean))];
+    const permissionsByGroup = this.readPermissionsByGroup(payload?.['permissionsByGroup']);
+    return this.normalizeUser({
+      id,
+      name: session.name || this.buildDisplayName(email),
+      username: email.split('@')[0] ?? id,
+      email,
+      phone: '',
+      birthDate: '2000-01-01',
+      address: '',
+      isSuperAdmin: payload?.['isSuperAdmin'] === true,
+      groupIds,
+      permissionsByGroup,
+      password: '',
+    }, this.getUsers().length + 1);
+  }
+
   private readJwtPayload(token: string): Record<string, unknown> | null {
     if (!token) {
       return null;
@@ -607,7 +701,8 @@ export class AuthService {
 
     try {
       const normalizedToken = token.replaceAll('-', '+').replaceAll('_', '/');
-      const payload = JSON.parse(atob(normalizedToken)) as unknown;
+      const paddedToken = normalizedToken.padEnd(normalizedToken.length + ((4 - normalizedToken.length % 4) % 4), '=');
+      const payload = JSON.parse(atob(paddedToken)) as unknown;
       return this.asRecord(payload);
     } catch {
       return null;

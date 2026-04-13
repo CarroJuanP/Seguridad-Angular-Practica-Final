@@ -268,9 +268,22 @@ function canMoveAssignedTicket(authUser: AppUser, ticket: TicketSummary): boolea
 async function forwardRequest(request: FastifyRequest, reply: FastifyReply, targetBaseUrl: string): Promise<void> {
   const targetUrl = `${targetBaseUrl}${request.raw.url ?? ''}`;
   const headers = new Headers();
+  const hopByHopHeaders = new Set([
+    'connection',
+    'content-length',
+    'host',
+    'keep-alive',
+    'proxy-authenticate',
+    'proxy-authorization',
+    'te',
+    'trailer',
+    'transfer-encoding',
+    'upgrade',
+  ]);
 
   for (const [key, value] of Object.entries(request.headers)) {
-    if (key.toLowerCase() === 'host' || value === undefined) {
+    const normalizedKey = key.toLowerCase();
+    if (hopByHopHeaders.has(normalizedKey) || value === undefined) {
       continue;
     }
 
@@ -282,9 +295,14 @@ async function forwardRequest(request: FastifyRequest, reply: FastifyReply, targ
   }
 
   const method = request.method.toUpperCase();
-  const body = ['GET', 'HEAD'].includes(method)
-    ? undefined
-    : JSON.stringify(request.body ?? {});
+  const hasBody = !['GET', 'HEAD'].includes(method);
+  const body = hasBody
+    ? JSON.stringify(request.body ?? {})
+    : undefined;
+
+  if (hasBody && !headers.has('content-type')) {
+    headers.set('content-type', 'application/json');
+  }
 
   const response = await fetch(targetUrl, { method, headers, body });
   const text = await response.text();
@@ -317,7 +335,11 @@ function sanitizeSelfUserPatch(body: unknown): Record<string, unknown> {
 }
 
 const app = Fastify({ logger: true });
-await app.register(cors, { origin: true });
+await app.register(cors, {
+  origin: true,
+  methods: ['GET', 'HEAD', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Authorization', 'Content-Type'],
+});
 await app.register(rateLimit, {
   max: 100,
   timeWindow: '1 minute',
@@ -503,8 +525,20 @@ app.patch('/users/:id', { schema: patchUserSchema }, async (request: FastifyRequ
 
   const targetUrl = `${USER_SERVICE_URL}${request.raw.url ?? ''}`;
   const headers = new Headers();
+  const hopByHopHeaders = new Set([
+    'connection',
+    'content-length',
+    'host',
+    'keep-alive',
+    'proxy-authenticate',
+    'proxy-authorization',
+    'te',
+    'trailer',
+    'transfer-encoding',
+    'upgrade',
+  ]);
   for (const [key, value] of Object.entries(request.headers)) {
-    if (key.toLowerCase() === 'host' || value === undefined) {
+    if (hopByHopHeaders.has(key.toLowerCase()) || value === undefined) {
       continue;
     }
 
